@@ -120,3 +120,14 @@ async def make_fetcher(web: FakeWeb):
     yield factory
     for fetcher in fetchers:
         await fetcher.aclose()
+
+
+@pytest.fixture
+def analyze_site(make_fetcher):
+    """Run the real runner against the FakeWeb (no rendering unless asked)."""
+    from raioxia.runner import analyze
+
+    async def run(url: str, *, checkers=None, render: bool = False, **settings):
+        return await analyze(url, fetcher=make_fetcher(**settings), checkers=checkers, render=render)
+
+    return run

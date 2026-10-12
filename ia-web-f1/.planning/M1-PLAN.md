@@ -78,7 +78,7 @@ Check 2 always carries the "indicative" caveat; Cloudflare gets dashboard verifi
 
 1. [x] Deps, `models`, `config`, YAMLs (`ai_agents`, `scoring`)
 2. [x] `net/ssrf` + `net/fetcher` with SSRF tests
-3. [ ] `checkers/base`, runner, scoring, CLI + check 8 (basics) end-to-end
+3. [x] `checkers/base`, runner, scoring, CLI + check 8 (basics) end-to-end
 4. [ ] robots parser + checks 1 and 7
 5. [ ] checks 4 and 6 (HTML parsing)
 6. [ ] check 3 (llms.txt)
