@@ -1,0 +1,19 @@
+[project]
+name = "raioxia"
+version = "0.0.1"
+description = "Raio-X IA — AI visibility checker (Phase 1)"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["raioxia*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
