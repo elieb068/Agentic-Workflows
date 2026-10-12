@@ -1,0 +1,96 @@
+# AI crawler tokens checked by Raio-X IA.
+# This list changes often: review against each vendor's official docs and bump `last_reviewed`.
+#
+# category:
+#   training -> collects content to train models (blocking it is a legitimate choice)
+#   search   -> indexes content so it can appear in AI answers / search
+#   user     -> fetches a page on demand when a person asks the assistant
+# robots_only: token is only honored in robots.txt; no crawler sends it as a User-Agent,
+#              so the edge check (2) skips it.
+# user_agent: full UA string used only by the edge comparison (check 2).
+
+last_reviewed: 2026-10-12
+
+browser_user_agent: >-
+  Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+  (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+
+agents:
+  # OpenAI
+  - token: GPTBot
+    company: OpenAI
+    category: training
+    user_agent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.1; +https://openai.com/gptbot)"
+  - token: OAI-SearchBot
+    company: OpenAI
+    category: search
+    user_agent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot"
+  - token: ChatGPT-User
+    company: OpenAI
+    category: user
+    user_agent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot"
+
+  # Anthropic
+  - token: ClaudeBot
+    company: Anthropic
+    category: training
+    user_agent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)"
+  - token: Claude-SearchBot
+    company: Anthropic
+    category: search
+    user_agent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-SearchBot/1.0; +https://www.anthropic.com)"
+  - token: Claude-User
+    company: Anthropic
+    category: user
+    user_agent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-User/1.0; +https://www.anthropic.com)"
+
+  # Perplexity
+  - token: PerplexityBot
+    company: Perplexity
+    category: search
+    user_agent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)"
+  - token: Perplexity-User
+    company: Perplexity
+    category: user
+    user_agent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)"
+
+  # Google
+  - token: Google-Extended
+    company: Google
+    category: training
+    robots_only: true
+  - token: Googlebot
+    company: Google
+    category: search
+    user_agent: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+
+  # Others
+  - token: Bingbot
+    company: Microsoft
+    category: search
+    user_agent: "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)"
+  - token: Applebot-Extended
+    company: Apple
+    category: training
+    robots_only: true
+  - token: CCBot
+    company: Common Crawl
+    category: training
+    user_agent: "CCBot/2.0 (https://commoncrawl.org/faq/)"
+  - token: Meta-ExternalAgent
+    company: Meta
+    category: training
+    user_agent: "meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler)"
+  - token: Bytespider
+    company: ByteDance
+    category: training
+    user_agent: "Mozilla/5.0 (Linux; Android 5.0) AppleWebKit/537.36 (KHTML, like Gecko) Mobile Safari/537.36 (compatible; Bytespider; spider-feedback@bytedance.com)"
+
+# Tokens no longer used by any crawler: robots.txt rules naming them have no effect.
+retired_tokens:
+  - token: anthropic-ai
+    company: Anthropic
+    replaced_by: [ClaudeBot]
+  - token: Claude-Web
+    company: Anthropic
+    replaced_by: [ClaudeBot, Claude-User]

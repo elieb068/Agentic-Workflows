@@ -1,0 +1,31 @@
+# Score 0-100 = sum(weight * status_value) / sum(weight) * 100.
+# Checks with status "indeterminado" are left out of both sums.
+
+status_values:
+  ok: 1.0
+  aviso: 0.5
+  erro: 0.0
+
+# Keyed by check id. Robots (1) and JS dependency (5) weigh the most;
+# edge blocking (2) weighs less because our result is only indicative.
+weights:
+  robots_ai: 25
+  js_dependency: 20
+  meta_robots: 15
+  edge_block: 10
+  llms_txt: 10
+  structured_data: 8
+  sitemap: 6
+  basics: 6
+
+# Highest min_score first; the first band whose min_score <= score wins.
+bands:
+  - id: open
+    label: Porta aberta
+    min_score: 80
+  - id: ajar
+    label: Entreaberta
+    min_score: 50
+  - id: closed
+    label: Fechada para a IA
+    min_score: 0
