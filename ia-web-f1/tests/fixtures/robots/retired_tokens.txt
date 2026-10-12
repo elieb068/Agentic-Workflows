@@ -1,0 +1,6 @@
+# Old rules copied from a 2023 blog post
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /

@@ -20,6 +20,7 @@ def all_checkers() -> list[Checker]:
     return [cls() for cls in REGISTRY.values()]
 
 
-from raioxia.checkers import basics  # noqa: E402,F401  (registers on import)
+# Registration order is the report order (spec numbering).
+from raioxia.checkers import robots_ai, sitemap, basics  # noqa: E402,F401,I001  (registers on import)
 
 __all__ = ["REGISTRY", "AnalysisContext", "Checker", "all_checkers", "register"]

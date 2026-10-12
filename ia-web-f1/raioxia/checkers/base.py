@@ -42,7 +42,7 @@ class AnalysisContext:
         self.render = render
         self._memo: dict[tuple, asyncio.Task] = {}
 
-    def _memoized(self, key: tuple, factory: Callable[[], Awaitable[Any]]) -> asyncio.Task:
+    def memo(self, key: tuple, factory: Callable[[], Awaitable[Any]]) -> asyncio.Task:
         task = self._memo.get(key)
         if task is None:
             task = self._memo[key] = asyncio.ensure_future(factory())
@@ -51,11 +51,11 @@ class AnalysisContext:
     async def fetch(self, url: str, *, method: str = "GET", user_agent: str | None = None) -> FetchResult:
         """Memoized SafeFetcher.fetch. Raises FetchError (also memoized)."""
         key = ("fetch", url, method, user_agent)
-        return await self._memoized(key, lambda: self.fetcher.fetch(url, method=method, user_agent=user_agent))
+        return await self.memo(key, lambda: self.fetcher.fetch(url, method=method, user_agent=user_agent))
 
     async def home(self) -> FetchResult:
         """The home page fetched with our own UA. Raises FetchError."""
-        return await self._memoized(("home",), self._fetch_home)
+        return await self.memo(("home",), self._fetch_home)
 
     async def _fetch_home(self) -> FetchResult:
         try:

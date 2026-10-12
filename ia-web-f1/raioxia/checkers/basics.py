@@ -12,6 +12,10 @@ from raioxia.parsing.html import HtmlDoc
 
 SLOW_MS = 2000
 
+
+def _seconds(ms: int) -> str:
+    return f"{ms / 1000:.1f}".replace(".", ",")  # PT-BR decimal comma
+
 _FETCH_FAILURES = {
     "timeout": "Sua página inicial demorou demais para responder e desistimos de esperar.",
     "tls": "Não conseguimos abrir sua página inicial porque o certificado HTTPS (o cadeado) parece inválido ou vencido.",
@@ -74,7 +78,7 @@ class BasicsChecker(Checker):
         if not problems:
             return self.result(
                 Status.OK,
-                f"Seu site usa HTTPS, abriu em {home.elapsed_ms / 1000:.1f} segundos e tem título, descrição "
+                f"Seu site usa HTTPS, abriu em {_seconds(home.elapsed_ms)} segundos e tem título, descrição "
                 "e idioma declarados. É o básico para a IA entender e confiar na sua página.",
                 evidencia=evidence,
             )
@@ -118,7 +122,7 @@ class BasicsChecker(Checker):
         return Item(
             "response_time",
             Status.WARNING,
-            f"Sua página inicial levou {elapsed_ms / 1000:.1f} segundos para responder. Robôs de IA têm pouca "
+            f"Sua página inicial levou {_seconds(elapsed_ms)} segundos para responder. Robôs de IA têm pouca "
             "paciência: páginas lentas podem ser abandonadas antes de serem lidas.",
             "Deixe a página mais leve (imagens comprimidas, menos plugins) e considere uma hospedagem ou CDN "
             "mais rápida.",

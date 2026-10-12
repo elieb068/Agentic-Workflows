@@ -85,3 +85,9 @@ async def test_unreachable_home(web, analyze_site):
     result = await basics(analyze_site, "https://site.example/")
     assert result.status == Status.ERROR
     assert result.evidencia["fetch_error"] == "connect"
+
+
+def test_seconds_use_decimal_comma():
+    from raioxia.checkers.basics import _seconds
+
+    assert _seconds(2345) == "2,3"

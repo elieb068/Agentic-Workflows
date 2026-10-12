@@ -1,0 +1,3 @@
+# Site em construção
+User-agent: *
+Disallow: /
