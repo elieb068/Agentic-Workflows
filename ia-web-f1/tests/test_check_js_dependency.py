@@ -18,7 +18,7 @@ def test_compare_text():
 
 
 def test_visible_text_skips_scripts_and_noscript():
-    doc = HtmlDoc((SPA / "index.html").read_text())
+    doc = HtmlDoc((SPA / "index.html").read_text(encoding="utf-8"))
     assert doc.visible_text() == ""
     assert HtmlDoc("<html><head><title>T</title></head><body><p>Olá <b>mundo</b></p></body></html>").visible_text() == "Olá mundo"
 
@@ -54,7 +54,7 @@ class TestWithBrowser:
         assert result.evidencia["coverage"] == 1.0
 
     async def test_spa_is_error(self, web, analyze_site):
-        result = await self.run(web, analyze_site, (SPA / "index.html").read_text(), (SPA / "main.js").read_text())
+        result = await self.run(web, analyze_site, (SPA / "index.html").read_text(encoding="utf-8"), (SPA / "main.js").read_text(encoding="utf-8"))
         assert result.status == Status.ERROR
         assert result.evidencia["raw_words"] == 0 and result.evidencia["rendered_words"] > 100
         assert "praticamente vazia" in result.explicacao

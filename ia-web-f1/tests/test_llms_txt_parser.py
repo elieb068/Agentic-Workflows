@@ -6,7 +6,7 @@ FIXTURES = Path(__file__).parent / "fixtures" / "llms"
 
 
 def test_valid_file():
-    doc = parse_llms_txt((FIXTURES / "valid.txt").read_text())
+    doc = parse_llms_txt((FIXTURES / "valid.txt").read_text(encoding="utf-8"))
     assert doc.title == "Padaria Pão Quente" and doc.title_is_first
     assert doc.summary.startswith("Padaria artesanal")
     assert doc.sections == {"Páginas principais": 2, "Optional": 1}
@@ -17,7 +17,7 @@ def test_valid_file():
 
 
 def test_incomplete_file():
-    doc = parse_llms_txt((FIXTURES / "incomplete.txt").read_text())
+    doc = parse_llms_txt((FIXTURES / "incomplete.txt").read_text(encoding="utf-8"))
     assert doc.issues == ["title_not_first", "missing_summary", "no_link_sections"]
     assert doc.other_links == ["https://site.example/cardapio"]
 

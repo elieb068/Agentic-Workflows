@@ -1,0 +1,3 @@
+# Keep LF everywhere (fixtures are compared byte for byte); Windows editors handle LF fine.
+* text=auto eol=lf
+*.gz binary

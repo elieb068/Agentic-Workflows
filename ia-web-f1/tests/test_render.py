@@ -23,8 +23,8 @@ def memoized(fetcher):
 
 
 async def test_renders_spa_through_safe_fetcher(web, make_fetcher):
-    web.add("https://spa.example/", (SPA / "index.html").read_text())
-    web.add("https://spa.example/static/js/main.js", (SPA / "main.js").read_text(), content_type="application/javascript")
+    web.add("https://spa.example/", (SPA / "index.html").read_text(encoding="utf-8"))
+    web.add("https://spa.example/static/js/main.js", (SPA / "main.js").read_text(encoding="utf-8"), content_type="application/javascript")
     async with Renderer() as renderer:
         result = await renderer.render("https://spa.example/", memoized(make_fetcher()))
     assert "Padaria Pão Quente" in result.text and "desde 1998" in result.text

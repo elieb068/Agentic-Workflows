@@ -94,19 +94,19 @@ def test_scoring_rejects_negative_weight():
 
 
 def test_agent_without_ua_must_be_robots_only(tmp_path: Path):
-    agents = yaml.safe_load((Path(__file__).parent.parent / "config/ai_agents.yaml").read_text())
+    agents = yaml.safe_load((Path(__file__).parent.parent / "config/ai_agents.yaml").read_text(encoding="utf-8"))
     agents["agents"][0].pop("user_agent")
-    (tmp_path / "ai_agents.yaml").write_text(yaml.safe_dump(agents))
-    (tmp_path / "scoring.yaml").write_text(yaml.safe_dump(_scoring()))
+    (tmp_path / "ai_agents.yaml").write_text(yaml.safe_dump(agents), encoding="utf-8")
+    (tmp_path / "scoring.yaml").write_text(yaml.safe_dump(_scoring()), encoding="utf-8")
     with pytest.raises(ValidationError, match="robots_only"):
         load_config(tmp_path)
 
 
 def test_duplicate_tokens_rejected(tmp_path: Path):
-    agents = yaml.safe_load((Path(__file__).parent.parent / "config/ai_agents.yaml").read_text())
+    agents = yaml.safe_load((Path(__file__).parent.parent / "config/ai_agents.yaml").read_text(encoding="utf-8"))
     agents["retired_tokens"].append({"token": "gptbot", "company": "OpenAI"})
-    (tmp_path / "ai_agents.yaml").write_text(yaml.safe_dump(agents))
-    (tmp_path / "scoring.yaml").write_text(yaml.safe_dump(_scoring()))
+    (tmp_path / "ai_agents.yaml").write_text(yaml.safe_dump(agents), encoding="utf-8")
+    (tmp_path / "scoring.yaml").write_text(yaml.safe_dump(_scoring()), encoding="utf-8")
     with pytest.raises(ValidationError, match="duplicate"):
         load_config(tmp_path)
 

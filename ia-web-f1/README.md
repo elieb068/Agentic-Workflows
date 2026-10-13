@@ -71,4 +71,18 @@ cp .env.example .env
 pytest                      # browser tests are skipped if Chromium is unavailable
 ```
 
+On Windows (PowerShell):
+
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1          # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+pip install -e ".[dev]"
+playwright install chromium
+copy .env.example .env
+pytest
+python -m raioxia analyze exemplo.com.br --pretty
+```
+
+VS Code picks up `.venv` and the pytest settings from `.vscode/settings.json` (Testing panel).
+
 Check 5 and the browser tests need Chromium for Playwright: run `playwright install chromium`, or point `CHROMIUM_EXECUTABLE` at an existing binary. Tests never touch the network.

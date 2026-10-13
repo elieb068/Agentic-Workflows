@@ -11,7 +11,7 @@ MD = "text/markdown; charset=utf-8"
 
 
 def fixture(name: str) -> str:
-    return (FIXTURES / name).read_text()
+    return (FIXTURES / name).read_text(encoding="utf-8")
 
 
 def add_pages(web):

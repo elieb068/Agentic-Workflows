@@ -7,8 +7,8 @@ from raioxia.checkers.edge_block import EdgeBlockChecker, detect_cdn
 from raioxia.models import Status
 
 FIXTURES = Path(__file__).parent / "fixtures" / "edge"
-PAGE = (FIXTURES / "normal_cloudflare_page.html").read_text()
-CHALLENGE = (FIXTURES / "cloudflare_challenge.html").read_text()
+PAGE = (FIXTURES / "normal_cloudflare_page.html").read_text(encoding="utf-8")
+CHALLENGE = (FIXTURES / "cloudflare_challenge.html").read_text(encoding="utf-8")
 CF_HEADERS = {"server": "cloudflare", "cf-ray": "8f1e2d3c4b5a6978-GRU", "content-type": "text/html; charset=utf-8"}
 SEARCH_TOKENS = ["OAI-SearchBot", "ChatGPT-User", "Claude-SearchBot", "Claude-User", "PerplexityBot",
                  "Perplexity-User", "Googlebot", "bingbot"]

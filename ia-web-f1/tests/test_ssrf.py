@@ -107,8 +107,9 @@ async def test_empty_dns_answer_is_dns_error():
 
 @pytest.mark.parametrize("url", ["http://localhost/", "http://2130706433/", "http://127.1/"])
 async def test_system_resolver_tricks_resolve_to_loopback_and_are_blocked(url):
-    # Decimal and short IPv4 forms are not IP literals for the URL parser,
-    # but getaddrinfo turns them into 127.0.0.1: the post-resolution check catches them.
+    # Decimal and short IPv4 forms are not IP literals for the URL parser. glibc's getaddrinfo turns them
+    # into 127.0.0.1 and the post-resolution check blocks them; other platforms may refuse to resolve them.
+    # Either way nothing is fetched.
     with pytest.raises(UnsafeURLError) as exc:
         await resolve_target(validate_url(url), SystemResolver())
-    assert exc.value.reason == "blocked_ip"
+    assert exc.value.reason in {"blocked_ip", "dns_error"}

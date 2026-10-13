@@ -19,7 +19,7 @@ async def run(web, analyze_site, robots: str | None = None, *, status: int = 200
 
 
 def fixture(name: str) -> str:
-    return (FIXTURES / name).read_text()
+    return (FIXTURES / name).read_text(encoding="utf-8")
 
 
 def verdicts(result) -> dict[str, str]:

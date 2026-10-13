@@ -50,7 +50,7 @@ def healthy_site(web, host: str = "padaria.example") -> str:
 def closed_site(web, host: str = "fechada.example") -> str:
     """Cloudflare blocking AI search bots, JS-only SPA, fake llms.txt, no sitemap, no structured data."""
     base = f"https://{host}"
-    spa = (FIXTURES / "spa" / "index.html").read_text()
+    spa = (FIXTURES / "spa" / "index.html").read_text(encoding="utf-8")
     bot_tokens = ("GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot", "Claude-SearchBot", "Claude-User",
                   "PerplexityBot", "Perplexity-User", "CCBot", "meta-externalagent", "Bytespider")
 
@@ -60,7 +60,7 @@ def closed_site(web, host: str = "fechada.example") -> str:
         return httpx.Response(200, content=spa.encode(), headers=CF_HEADERS)
 
     web.route(f"{base}/", home)
-    web.add(f"{base}/static/js/main.js", (FIXTURES / "spa" / "main.js").read_text(), content_type="application/javascript")
-    web.add(f"{base}/robots.txt", (FIXTURES / "robots" / "block_search.txt").read_text(), content_type="text/plain")
-    web.add(f"{base}/llms.txt", (FIXTURES / "llms" / "soft404.html").read_text())
+    web.add(f"{base}/static/js/main.js", (FIXTURES / "spa" / "main.js").read_text(encoding="utf-8"), content_type="application/javascript")
+    web.add(f"{base}/robots.txt", (FIXTURES / "robots" / "block_search.txt").read_text(encoding="utf-8"), content_type="text/plain")
+    web.add(f"{base}/llms.txt", (FIXTURES / "llms" / "soft404.html").read_text(encoding="utf-8"))
     return f"{base}/"
