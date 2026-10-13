@@ -131,3 +131,24 @@ def analyze_site(make_fetcher):
         return await analyze(url, fetcher=make_fetcher(**settings), checkers=checkers, render=render)
 
     return run
+
+
+@pytest.fixture(scope="session")
+def browser_available() -> bool:
+    """Chromium for Playwright: set CHROMIUM_EXECUTABLE if Playwright's own browser is not installed."""
+    import os
+
+    from playwright.sync_api import Error, sync_playwright
+
+    try:
+        with sync_playwright() as p:
+            p.chromium.launch(executable_path=os.environ.get("CHROMIUM_EXECUTABLE") or None).close()
+        return True
+    except Error:
+        return False
+
+
+@pytest.fixture
+def require_browser(browser_available):
+    if not browser_available:
+        pytest.skip("Chromium for Playwright not available (set CHROMIUM_EXECUTABLE)")

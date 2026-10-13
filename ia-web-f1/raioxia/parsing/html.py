@@ -59,3 +59,13 @@ class HtmlDoc:
         for node in self.tree.css("[itemtype]"):
             types += (node.attributes.get("itemtype") or "").split()
         return types
+
+    def visible_text(self) -> str:
+        """Text a non-JS crawler gets from the raw HTML (scripts, styles and <noscript> removed).
+
+        Uses a separate parse because strip_tags mutates the tree.
+        """
+        tree = LexborHTMLParser(self.tree.html or "")
+        tree.strip_tags(["script", "style", "noscript", "template", "svg", "head"])
+        root = tree.body or tree.root
+        return " ".join((root.text(separator=" ") if root else "").split())
