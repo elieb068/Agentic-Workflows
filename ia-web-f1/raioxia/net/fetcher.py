@@ -15,7 +15,14 @@ from http.cookiejar import CookieJar, DefaultCookiePolicy
 
 import httpx
 
-from raioxia.net.ssrf import Resolver, SystemResolver, Target, UnsafeURLError, resolve_target, validate_url
+from raioxia.net.ssrf import (
+    Resolver,
+    SystemResolver,
+    Target,
+    UnsafeURLError,
+    resolve_target,
+    validate_url,
+)
 
 DEFAULT_USER_AGENT = "RaioXIA-Bot/0.1 (+https://raioxia.com.br/bot)"
 REDIRECT_STATUSES = {301, 302, 303, 307, 308}

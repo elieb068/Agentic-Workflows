@@ -84,10 +84,17 @@ Check 2 always carries the "indicative" caveat; Cloudflare gets dashboard verifi
 6. [x] check 3 (llms.txt)
 7. [x] check 2 (edge)
 8. [x] `net/render` + check 5 (Playwright)
-9. [ ] CLI end-to-end test with a simulated site; README/ROADMAP update
+9. [x] CLI end-to-end test with a simulated site; README/ROADMAP update
 
 ## Done criteria
 
 - `python -m raioxia analyze https://example.com` prints JSON with 8 results, score and band.
 - `pytest` passes with no network access.
 - SSRF tests cover internal IPs, redirect to internal IP, rebinding, forbidden port and the 5 MB cap.
+
+## Outcome (2026-10-13)
+
+All 9 commits done. Done criteria met: CLI prints the 8 results with score and band; pytest passes with no
+network access; SSRF tests cover internal IPs, redirects to internal IPs, rebinding, forbidden ports and the
+5 MB cap. Deviations from the plan above: training-only blocks are informational (option B) and check 4 also
+flags nosnippet/max-snippet:0.

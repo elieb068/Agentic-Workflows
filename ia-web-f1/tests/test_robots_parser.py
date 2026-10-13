@@ -1,6 +1,12 @@
 import pytest
 
-from raioxia.parsing.robots import MAX_ROBOTS_BYTES, Robots, looks_like_html, normalize_token, path_matches
+from raioxia.parsing.robots import (
+    MAX_ROBOTS_BYTES,
+    Robots,
+    looks_like_html,
+    normalize_token,
+    path_matches,
+)
 
 
 def allowed(text: str, token: str, path: str) -> bool:

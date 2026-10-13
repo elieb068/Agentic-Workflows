@@ -13,7 +13,8 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 
-from playwright.async_api import Browser, Error as PlaywrightError, Route, WebSocketRoute, async_playwright
+from playwright.async_api import Browser, Route, WebSocketRoute, async_playwright
+from playwright.async_api import Error as PlaywrightError
 
 from raioxia.net.fetcher import FetchError, FetchResult
 

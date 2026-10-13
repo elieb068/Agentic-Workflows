@@ -8,9 +8,16 @@ Revenue: ads on the site, newsletter (sponsorship/affiliates) and, later, a paid
 
 Full definitions: [`../CLAUDE.md`](../CLAUDE.md).
 
-## Current State (as of 2026-10-12)
+## Current State (as of 2026-10-13)
 
-Project scaffold created (package skeleton, pyproject, .env.example, smoke test). No checkers implemented yet.
+M1 (analysis core) is done: the 8 checks, weighted score with bands, SSRF-safe fetcher and Playwright renderer, and the CLI `python -m raioxia analyze <url>`. The test suite runs without network (browser tests skip when Chromium is missing).
+
+Decisions taken during M1:
+- Blocking only AI training crawlers (robots.txt, meta tags or CDN) is reported but not penalized (option B, 2026-10-13).
+- `nosnippet` / `max-snippet:0` are flagged in check 4: Google uses them to keep pages out of AI Overviews.
+- Composite checks (e.g. basics) take the worst status of their parts.
+
+Next: M2 (pipeline).
 
 ## Stack
 

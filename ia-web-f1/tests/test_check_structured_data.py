@@ -1,6 +1,10 @@
 import json
 
-from raioxia.checkers.structured_data import StructuredDataChecker, iter_types, parse_blocks
+from raioxia.checkers.structured_data import (
+    StructuredDataChecker,
+    iter_types,
+    parse_blocks,
+)
 from raioxia.models import Status
 
 

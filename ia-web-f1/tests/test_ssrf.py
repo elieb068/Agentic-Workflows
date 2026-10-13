@@ -2,7 +2,13 @@ import ipaddress
 
 import pytest
 
-from raioxia.net.ssrf import SystemResolver, UnsafeURLError, is_public_ip, resolve_target, validate_url
+from raioxia.net.ssrf import (
+    SystemResolver,
+    UnsafeURLError,
+    is_public_ip,
+    resolve_target,
+    validate_url,
+)
 from tests.conftest import FakeResolver
 
 BLOCKED_IPS = [
