@@ -1,0 +1,14 @@
+# Padaria Pão Quente
+
+> Padaria artesanal em Campinas (SP), com pães de fermentação natural, bolos e encomendas para eventos.
+
+Atendemos de terça a domingo, das 7h às 19h.
+
+## Páginas principais
+
+- [Cardápio](https://site.example/cardapio): pães, bolos e preços
+- [Encomendas](/encomendas): como encomendar para festas
+
+## Optional
+
+- [Nossa história](https://site.example/historia)

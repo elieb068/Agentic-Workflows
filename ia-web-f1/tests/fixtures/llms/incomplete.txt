@@ -1,0 +1,3 @@
+Bem-vindo ao site da Padaria Pão Quente!
+# Padaria Pão Quente
+Veja nosso [cardápio](https://site.example/cardapio).

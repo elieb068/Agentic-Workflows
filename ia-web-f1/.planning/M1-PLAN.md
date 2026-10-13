@@ -81,7 +81,7 @@ Check 2 always carries the "indicative" caveat; Cloudflare gets dashboard verifi
 3. [x] `checkers/base`, runner, scoring, CLI + check 8 (basics) end-to-end
 4. [x] robots parser + checks 1 and 7
 5. [x] checks 4 and 6 (HTML parsing)
-6. [ ] check 3 (llms.txt)
+6. [x] check 3 (llms.txt)
 7. [ ] check 2 (edge)
 8. [ ] `net/render` + check 5 (Playwright)
 9. [ ] CLI end-to-end test with a simulated site; README/ROADMAP update
