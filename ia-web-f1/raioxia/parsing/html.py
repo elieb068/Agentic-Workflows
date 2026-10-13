@@ -33,3 +33,29 @@ class HtmlDoc:
             if (node.attributes.get("name") or "").strip().lower() == wanted:
                 return _clean(node.attributes.get("content"))
         return None
+
+    def metas_by_name(self) -> dict[str, list[str]]:
+        """All <meta name=... content=...> grouped by lowercased name."""
+        found: dict[str, list[str]] = {}
+        for node in self.tree.css("meta[name]"):
+            name = (node.attributes.get("name") or "").strip().lower()
+            content = node.attributes.get("content")
+            if name and content is not None:
+                found.setdefault(name, []).append(content.strip())
+        return found
+
+    def jsonld_blocks(self) -> list[str]:
+        """Raw text of every <script type="application/ld+json"> block."""
+        blocks = []
+        for node in self.tree.css("script[type]"):
+            script_type = (node.attributes.get("type") or "").split(";", 1)[0].strip().lower()
+            if script_type == "application/ld+json":
+                blocks.append(node.text() or "")
+        return blocks
+
+    def microdata_types(self) -> list[str]:
+        """itemtype values (microdata), e.g. https://schema.org/Bakery."""
+        types = []
+        for node in self.tree.css("[itemtype]"):
+            types += (node.attributes.get("itemtype") or "").split()
+        return types
