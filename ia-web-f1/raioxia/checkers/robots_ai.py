@@ -94,7 +94,7 @@ class RobotsAIChecker(Checker):
                 evidence,
             )
 
-        problems: list[str] = []
+        problems: list[str] = []  # also carries informational notes (training)
         fixes: list[str] = []
         status = Status.OK
 
@@ -136,7 +136,7 @@ class RobotsAIChecker(Checker):
                 "você quer ver citadas nas respostas de IA."
             )
         if training_limited:
-            status = worst([status, Status.WARNING])
+            # Informational only: blocking training is a legitimate choice and does not lower the score.
             problems.append(
                 f"Você bloqueia (total ou parcialmente) robôs que coletam conteúdo para treinar IA: "
                 f"{_names(training_limited)}. É uma escolha legítima e não tira o seu site das respostas."

@@ -74,7 +74,7 @@ async def test_block_all_is_error_and_names_search_bots(web, analyze_site):
 
 async def test_cloudflare_managed_blocks_training_only(web, analyze_site):
     result = await run(web, analyze_site, fixture("cloudflare_managed.txt"))
-    assert result.status == Status.WARNING
+    assert result.status == Status.OK  # training block is informational, not penalized
     v = verdicts(result)
     for token in ["GPTBot", "ClaudeBot", "Google-Extended", "Applebot-Extended", "CCBot", "Meta-ExternalAgent", "Bytespider"]:
         assert v[token] == "bloqueado", token
@@ -124,3 +124,10 @@ async def test_robots_read_from_host_after_redirect(web, analyze_site):
     report = await analyze_site("site.example", checkers=[RobotsAIChecker()])
     assert report.checks[0].evidencia["robots_url"] == "https://www.site.example/robots.txt"
     assert report.checks[0].status == Status.ERROR
+
+
+async def test_training_block_does_not_hide_other_warnings(web, analyze_site):
+    robots = fixture("cloudflare_managed.txt") + "\nUser-agent: anthropic-ai\nDisallow: /\n"
+    result = await run(web, analyze_site, robots)
+    assert result.status == Status.WARNING  # from the retired token, not from training
+    assert "escolha legítima" in result.explicacao and "nome antigo" in result.explicacao

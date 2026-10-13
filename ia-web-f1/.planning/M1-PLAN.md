@@ -63,7 +63,7 @@ tests/
 
 | # | Check | ok | aviso | erro |
 |---|---|---|---|---|
-| 1 | robots x AI | search bots allowed | training blocked (legitimate, informational) or rules using retired tokens | any search/user bot blocked |
+| 1 | robots x AI | search bots allowed (training blocks are reported but not penalized, option B 2026-10-13) | search partially blocked, rules using retired tokens, or HTML served as robots.txt | any search/user bot blocked |
 | 2 | Edge (CDN/WAF) | bots get the same as the browser | very different size | 403/503 or challenge only for bots |
 | 3 | llms.txt | valid, links working | missing or incomplete structure | HTML, redirect to home, or wrong content-type |
 | 4 | Meta robots | nothing restrictive | `noai`/`noimageai` | `noindex` on home |
