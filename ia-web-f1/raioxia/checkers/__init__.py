@@ -21,6 +21,6 @@ def all_checkers() -> list[Checker]:
 
 
 # Registration order is the report order (spec numbering).
-from raioxia.checkers import robots_ai, llms_txt, meta_robots, structured_data, sitemap, basics  # noqa: E402,F401,I001  (registers on import)
+from raioxia.checkers import robots_ai, edge_block, llms_txt, meta_robots, structured_data, sitemap, basics  # noqa: E402,F401,I001  (registers on import)
 
 __all__ = ["REGISTRY", "AnalysisContext", "Checker", "all_checkers", "register"]
