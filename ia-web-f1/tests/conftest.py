@@ -214,3 +214,87 @@ def db(db_sessionmaker):
     session = db_sessionmaker()
     yield session
     session.close()
+
+
+# --- Pipeline environment (M2) ------------------------------------------------------------------
+# Everything the API and the jobs reach for, swapped for test doubles: DB sessions in the test
+# transaction, synchronous fakeredis queues, a ConsoleSender, and a fake runner (never the network).
+
+
+@dataclass
+class PipelineEnv:
+    settings: object
+    sender: object
+    redis: object
+    queues: dict
+    analyze_calls: list[str] = field(default_factory=list)
+    analyze_result: object = None  # an AnalysisReport, or an exception to raise
+
+
+def sample_report(score: int | None = 71):
+    from datetime import UTC, datetime
+
+    from raioxia.models import AnalysisReport, Band, CheckResult, Status
+
+    return AnalysisReport(
+        url="https://exemplo.com.br/",
+        final_url="https://exemplo.com.br/",
+        score=score,
+        band=Band(id="ajar", label="Entreaberta") if score is not None else None,
+        checks=[
+            CheckResult(id="robots_ai", status=Status.OK, titulo="Robôs de IA liberados", explicacao="ok", peso=25),
+            CheckResult(id="js_dependency", status=Status.ERROR, titulo="Conteúdo só aparece com JavaScript", explicacao="x", peso=20),
+            CheckResult(id="llms_txt", status=Status.WARNING, titulo="llms.txt incompleto", explicacao="x", peso=10),
+        ],
+        analyzed_at=datetime(2026, 10, 14, 12, 0, tzinfo=UTC),
+        duration_ms=1946,
+        version="0.0.1",
+    )
+
+
+@pytest.fixture
+def pipeline_env(db_sessionmaker, monkeypatch) -> PipelineEnv:
+    from contextlib import contextmanager
+
+    import fakeredis
+    from rq import Queue
+
+    import raioxia.email.jobs
+    import raioxia.jobs
+    from raioxia.email.base import ConsoleSender
+    from raioxia.settings import Settings
+
+    redis = fakeredis.FakeStrictRedis()
+    env = PipelineEnv(
+        settings=Settings(_env_file=None, secret_key="k" * 40, app_base_url="https://raiox.primesolutions.net.br"),
+        sender=ConsoleSender(),
+        redis=redis,
+        queues={name: Queue(name, connection=redis, is_async=False) for name in ("analysis", "email")},
+        analyze_result=sample_report(),
+    )
+
+    @contextmanager
+    def scope(factory=None):
+        session = db_sessionmaker()
+        try:
+            yield session
+            session.commit()
+        except BaseException:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    async def fake_analyze(url, **kwargs):
+        env.analyze_calls.append(url)
+        if isinstance(env.analyze_result, BaseException):
+            raise env.analyze_result
+        return env.analyze_result
+
+    for module in (raioxia.jobs, raioxia.email.jobs):
+        monkeypatch.setattr(module, "session_scope", scope)
+        monkeypatch.setattr(module, "get_settings", lambda: env.settings)
+    monkeypatch.setattr(raioxia.jobs, "get_queue", lambda name, connection=None: env.queues[name])
+    monkeypatch.setattr(raioxia.jobs, "analyze", fake_analyze)
+    monkeypatch.setattr(raioxia.email.jobs, "get_sender", lambda: env.sender)
+    return env

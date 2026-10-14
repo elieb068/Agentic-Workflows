@@ -1,4 +1,4 @@
-"""Command line: python -m raioxia analyze <url> | migrate"""
+"""Command line: python -m raioxia analyze <url> | migrate | worker <queue>"""
 
 import argparse
 import asyncio
@@ -20,6 +20,8 @@ def build_parser() -> argparse.ArgumentParser:
     cmd.add_argument("--pretty", action="store_true", help="indent the JSON output")
     cmd.add_argument("--only", help=f"comma-separated check ids to run ({', '.join(REGISTRY)})")
     sub.add_parser("migrate", help="apply database migrations (DATABASE_URL) up to the latest revision")
+    worker = sub.add_parser("worker", help="run an RQ worker for one queue (analysis or email)")
+    worker.add_argument("queue", choices=("analysis", "email"))
     return parser
 
 
@@ -27,6 +29,11 @@ def main(argv: list[str] | None = None, fetcher_factory: Callable[[], SafeFetche
     args = build_parser().parse_args(argv)
     if args.command == "migrate":
         return migrate()
+    if args.command == "worker":
+        from raioxia.jobs import run_worker
+
+        run_worker(args.queue)
+        return 0
     checkers = None
     if args.only:
         ids = [i.strip() for i in args.only.split(",") if i.strip()]

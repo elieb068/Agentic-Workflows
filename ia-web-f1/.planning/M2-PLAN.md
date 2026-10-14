@@ -84,7 +84,7 @@ compose.dev.yaml        postgres 17 + redis 7 for local dev/tests on 127.0.0.1:1
 1. [x] Deps, `settings`, `compose.dev.yaml`, DB models + first Alembic migration, JSON logging, `migrate` command
 2. [x] `pipeline` + `tokens`: create analysis, confirm, expire, 24h reuse (DB tests); `analyses.newsletter_opt_in` (double opt-in for the newsletter)
 3. [x] E-mail function: outbox table, `queue_*_email` + `dispatch`, `send_email` job on queue `email`, ConsoleSender, Jinja2 templates (confirm, report, failed, deletion)
-4. [ ] Analysis RQ job + worker entry points (`python -m raioxia worker analysis|email`), retry/timeout, persistence of the report
+4. [x] Analysis RQ job + worker entry points (`python -m raioxia worker analysis|email`), retry/timeout, persistence of the report (forking Worker on Linux; SimpleWorker + timer timeouts on Windows for dev)
 5. [ ] FastAPI app: `POST /api/analyses`, `/confirmar/{t}`, `/api/r/{token}`, `/healthz`
 6. [ ] Turnstile + rate limits + client IP
 7. [ ] LGPD: unsubscribe, data deletion, consent log, retention `purge`; `stats` command
