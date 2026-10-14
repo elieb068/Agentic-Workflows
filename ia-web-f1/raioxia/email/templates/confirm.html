@@ -1,0 +1,7 @@
+{% extends "_layout.html" %}
+{% block body %}
+<p>Olá!</p>
+<p>Recebemos um pedido de Raio-X IA para <strong>{{ domain }}</strong>. Para começar a análise, confirme que este e-mail é seu:</p>
+{% with href=confirm_url, label="Confirmar e analisar meu site" %}{% include "_button.html" %}{% endwith %}
+<p>O link vale por {{ expires_hours }} horas. Se não foi você quem pediu, é só ignorar este e-mail: nada será analisado.</p>
+{% endblock %}

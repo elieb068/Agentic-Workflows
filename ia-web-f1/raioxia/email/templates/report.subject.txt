@@ -1,0 +1,1 @@
+{% if score is not none %}Raio-X IA de {{ domain }}: nota {{ score }} de 100{% else %}Seu Raio-X IA de {{ domain }} está pronto{% endif %}

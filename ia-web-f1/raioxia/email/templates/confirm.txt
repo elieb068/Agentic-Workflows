@@ -1,0 +1,13 @@
+Olá!
+
+Recebemos um pedido de Raio-X IA para {{ domain }}. Para começar a análise, confirme que este e-mail é seu:
+
+{{ confirm_url }}
+
+O link vale por {{ expires_hours }} horas. Se não foi você quem pediu, é só ignorar este e-mail: nada será analisado.
+
+--
+Raio-X IA · {{ base_url }}
+Privacidade: {{ privacy_url }}
+{% if unsubscribe_url %}Não quero mais receber e-mails: {{ unsubscribe_url }}
+{% endif %}

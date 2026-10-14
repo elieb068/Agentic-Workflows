@@ -1,0 +1,16 @@
+Seu Raio-X IA de {{ domain }} está pronto.
+{% if score is not none %}
+Nota: {{ score }} de 100 ({{ band_label }})
+{% endif %}
+{% if problems %}O que mais pesa contra o seu site agora:
+{% for p in problems %}{{ loop.index }}. {{ p.titulo }} ({% if p.status == "erro" %}problema{% else %}atenção{% endif %})
+{% endfor %}{% else %}Não encontramos nenhum problema importante. Parabéns!
+{% endif %}
+Relatório completo, com explicação e como corrigir:
+{{ report_url }}
+
+--
+Raio-X IA · {{ base_url }}
+Privacidade: {{ privacy_url }}
+{% if unsubscribe_url %}Não quero mais receber e-mails: {{ unsubscribe_url }}
+{% endif %}

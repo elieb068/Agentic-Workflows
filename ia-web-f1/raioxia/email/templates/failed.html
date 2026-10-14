@@ -1,0 +1,6 @@
+{% extends "_layout.html" %}
+{% block body %}
+<p>Tentamos fazer o Raio-X IA de <strong>{{ domain }}</strong>, mas não deu certo.</p>
+<p>{{ error_message }}</p>
+<p>Se o endereço estiver certo, tente de novo mais tarde em <a href="{{ base_url }}" style="color:#1d4ed8;">{{ base_url | replace("https://", "") }}</a>.</p>
+{% endblock %}

@@ -1,0 +1,1 @@
+Confirme seu e-mail para receber o Raio-X IA de {{ domain }}

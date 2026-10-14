@@ -1,0 +1,11 @@
+Tentamos fazer o Raio-X IA de {{ domain }}, mas não deu certo.
+
+{{ error_message }}
+
+Se o endereço estiver certo, tente de novo mais tarde em {{ base_url }}
+
+--
+Raio-X IA · {{ base_url }}
+Privacidade: {{ privacy_url }}
+{% if unsubscribe_url %}Não quero mais receber e-mails: {{ unsubscribe_url }}
+{% endif %}

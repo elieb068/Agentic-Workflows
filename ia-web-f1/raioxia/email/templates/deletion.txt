@@ -1,0 +1,10 @@
+Recebemos um pedido para excluir os dados deste e-mail do Raio-X IA: cadastro, consentimentos, análises e relatórios.
+
+Para confirmar, abra:
+{{ delete_url }}
+
+O link vale por {{ expires_hours }} horas. A exclusão não pode ser desfeita. Se não foi você quem pediu, ignore este e-mail.
+
+--
+Raio-X IA · {{ base_url }}
+Privacidade: {{ privacy_url }}

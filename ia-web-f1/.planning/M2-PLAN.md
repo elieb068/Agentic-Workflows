@@ -31,9 +31,10 @@ raioxia/
   jobs.py               RQ job: run analysis, save, enqueue report e-mail
   pipeline.py           domain logic shared by API and worker (create, confirm, reuse, finish)
   email/                separate sending function: nothing else talks to a mail provider
-    outbox.py           enqueue_email(): render template, store outbox row, enqueue on queue "email"
+    outbox.py           queue_*_email(): store an outbox row (kind + context); dispatch() after commit; requeue_stale()
     jobs.py             send_email(outbox_id): the only code that sends; retries with backoff
-    base.py             EmailSender protocol + ConsoleSender (dev/tests)
+    base.py             EmailSender protocol, MIME building, ConsoleSender (dev/tests)
+    render.py           Jinja2 rendering; unsubscribe links signed at render time, never stored
     gmail.py            GmailApiSender: Workspace service account + domain-wide delegation, gmail.send scope
     templates/          Jinja2: confirm, report, failed (HTML + text), PT-BR
   tokens.py             token generation/hashing, signed unsubscribe links
@@ -47,7 +48,7 @@ compose.dev.yaml        postgres 17 + redis 7 for local dev/tests on 127.0.0.1:1
 
 - **leads**: id, email (normalized, unique), created_at, confirmed_at, newsletter (bool, current state), unsubscribed_at.
 - **consents** (append-only log): id, lead_id, kind (`report_terms` | `newsletter`), granted (bool), text_version, ip, user_agent, created_at. Withdrawals are new rows, never updates.
-- **email_outbox**: id, lead_id, kind (`confirm` | `report` | `failed` | `deletion`), to_address, subject, status (`queued` | `sent` | `failed`), attempts, provider_message_id, last_error, created_at, sent_at. Bodies are rendered at send time from template + context, not stored.
+- **email_outbox**: id, lead_id, kind (`confirm` | `report` | `failed` | `deletion`), to_address, subject, status (`queued` | `sent` | `failed`), attempts, provider_message_id, last_error, created_at, sent_at. Bodies are rendered at send time from template + context, not stored. Context keys holding token links (`confirm_url`, `delete_url`) are removed once the message is sent, so the plaintext confirmation token lives only while the e-mail is pending.
 - **analyses**: id, lead_id, url (normalized), domain, status (`pending_confirmation` | `queued` | `running` | `done` | `failed` | `expired`), confirm_token_hash, confirm_expires_at, report_token, requested_ip, newsletter_opt_in, reused_from_id, score, band, final_url, version, error_code, error_message, duration_ms, created_at, confirmed_at, finished_at.
 - **check_results**: analysis_id, check_id, status, titulo, explicacao, como_corrigir, evidencia (jsonb), peso. Same field names as `CheckResult`.
 
@@ -82,7 +83,7 @@ compose.dev.yaml        postgres 17 + redis 7 for local dev/tests on 127.0.0.1:1
 
 1. [x] Deps, `settings`, `compose.dev.yaml`, DB models + first Alembic migration, JSON logging, `migrate` command
 2. [x] `pipeline` + `tokens`: create analysis, confirm, expire, 24h reuse (DB tests); `analyses.newsletter_opt_in` (double opt-in for the newsletter)
-3. [ ] E-mail function: outbox table, `enqueue_email`, `send_email` job on queue `email`, ConsoleSender, Jinja2 templates (confirm, report, failed)
+3. [x] E-mail function: outbox table, `queue_*_email` + `dispatch`, `send_email` job on queue `email`, ConsoleSender, Jinja2 templates (confirm, report, failed, deletion)
 4. [ ] Analysis RQ job + worker entry points (`python -m raioxia worker analysis|email`), retry/timeout, persistence of the report
 5. [ ] FastAPI app: `POST /api/analyses`, `/confirmar/{t}`, `/api/r/{token}`, `/healthz`
 6. [ ] Turnstile + rate limits + client IP

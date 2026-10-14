@@ -1,0 +1,18 @@
+{% extends "_layout.html" %}
+{% block body %}
+<p>Seu Raio-X IA de <strong>{{ domain }}</strong> está pronto.</p>
+{% if score is not none %}
+<p style="font-size:28px;font-weight:bold;margin:16px 0 4px;">{{ score }}<span style="font-size:16px;font-weight:normal;color:#616e7c;"> de 100</span></p>
+<p style="margin:0 0 16px;font-weight:bold;">{{ band_label }}</p>
+{% endif %}
+{% if problems %}
+<p>O que mais pesa contra o seu site agora:</p>
+<ol style="padding-left:20px;">
+{% for p in problems %}<li style="margin-bottom:6px;">{{ p.titulo }}{% if p.status == "erro" %} <span style="color:#b91c1c;">(problema)</span>{% else %} <span style="color:#b45309;">(atenção)</span>{% endif %}</li>
+{% endfor %}</ol>
+{% else %}
+<p>Não encontramos nenhum problema importante. Parabéns!</p>
+{% endif %}
+{% with href=report_url, label="Ver o relatório completo" %}{% include "_button.html" %}{% endwith %}
+<p>No relatório você encontra a explicação de cada item e como corrigir.</p>
+{% endblock %}

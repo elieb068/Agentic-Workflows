@@ -1,0 +1,7 @@
+{% extends "_layout.html" %}
+{% block body %}
+<p>Recebemos um pedido para excluir os dados deste e-mail do Raio-X IA: cadastro, consentimentos, análises e relatórios.</p>
+{% with href=delete_url, label="Excluir meus dados" %}{% include "_button.html" %}{% endwith %}
+<p>O link vale por {{ expires_hours }} horas. A exclusão não pode ser desfeita. Se não foi você quem pediu, ignore este e-mail.</p>
+{% endblock %}
+{% block footer %}Você recebeu este e-mail porque alguém pediu a exclusão dos dados deste endereço no Raio-X IA.{% endblock %}
