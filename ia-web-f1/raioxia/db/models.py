@@ -100,6 +100,8 @@ class Analysis(Base):
     confirm_expires_at: Mapped[datetime | None]
     report_token: Mapped[str] = mapped_column(String(64), unique=True)
     requested_ip: Mapped[str | None] = mapped_column(INET)
+    # Newsletter box ticked on this request; applied to the lead only when the e-mail is confirmed.
+    newsletter_opt_in: Mapped[bool] = mapped_column(server_default=text("false"))
     reused_from_id: Mapped[int | None] = mapped_column(ForeignKey("analyses.id", ondelete="SET NULL"))
     score: Mapped[int | None] = mapped_column(SmallInteger)
     band_id: Mapped[str | None] = mapped_column(String(32))

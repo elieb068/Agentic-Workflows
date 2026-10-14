@@ -48,7 +48,7 @@ compose.dev.yaml        postgres 17 + redis 7 for local dev/tests on 127.0.0.1:1
 - **leads**: id, email (normalized, unique), created_at, confirmed_at, newsletter (bool, current state), unsubscribed_at.
 - **consents** (append-only log): id, lead_id, kind (`report_terms` | `newsletter`), granted (bool), text_version, ip, user_agent, created_at. Withdrawals are new rows, never updates.
 - **email_outbox**: id, lead_id, kind (`confirm` | `report` | `failed` | `deletion`), to_address, subject, status (`queued` | `sent` | `failed`), attempts, provider_message_id, last_error, created_at, sent_at. Bodies are rendered at send time from template + context, not stored.
-- **analyses**: id, lead_id, url (normalized), domain, status (`pending_confirmation` | `queued` | `running` | `done` | `failed` | `expired`), confirm_token_hash, confirm_expires_at, report_token, requested_ip, reused_from_id, score, band, final_url, version, error_code, error_message, duration_ms, created_at, confirmed_at, finished_at.
+- **analyses**: id, lead_id, url (normalized), domain, status (`pending_confirmation` | `queued` | `running` | `done` | `failed` | `expired`), confirm_token_hash, confirm_expires_at, report_token, requested_ip, newsletter_opt_in, reused_from_id, score, band, final_url, version, error_code, error_message, duration_ms, created_at, confirmed_at, finished_at.
 - **check_results**: analysis_id, check_id, status, titulo, explicacao, como_corrigir, evidencia (jsonb), peso. Same field names as `CheckResult`.
 
 ## Design decisions
@@ -65,6 +65,7 @@ compose.dev.yaml        postgres 17 + redis 7 for local dev/tests on 127.0.0.1:1
 - **Gmail API via Workspace service account** (user decision 2026-10-14): a Google Cloud service account with domain-wide delegation limited to `https://www.googleapis.com/auth/gmail.send`, impersonating `eric.lieb@primesolutions.net.br` and sending as its alias: `From: Raio-X IA <raiox@primesolutions.net.br>`, `Reply-To` the same alias. The alias must be listed in that mailbox's Gmail "Send mail as" addresses, otherwise Gmail silently rewrites `From` to the primary address; `gmail.send` cannot read that list, so setup includes a one-off check plus a test send. Domain-wide delegation lets the key impersonate any user of the domain for the delegated scope, so the scope stays `gmail.send` only and the key is treated as a production secret. Sent with `google-auth` + httpx to `users.messages.send` (raw MIME, base64url), no heavy Google client library. The JSON key is a file mounted read-only from outside the repo (`GMAIL_SERVICE_ACCOUNT_FILE`), never in `.env` or git. Workspace caps one user at about 2,000 messages/day, far above the rate limits; logged and alerted on quota errors.
 - **Deliverability**: primesolutions.net.br already has Google MX and DKIM, but **no SPF and no DMARC**. Before go-live add `v=spf1 include:_spf.google.com ~all` and `v=DMARC1; p=none; rua=mailto:eric.lieb@primesolutions.net.br` in Cloudflare DNS (Gmail/Yahoo sender rules), then tighten DMARC later.
 - **E-mail content**: `ConsoleSender` in dev/tests. Every e-mail carries an unsubscribe link and `List-Unsubscribe` / `List-Unsubscribe-Post` headers. Templates are plain and easy to swap (final look comes with M3).
+- **Unsubscribe scope**: unsubscribing ends the newsletter; e-mails that answer the person's own new request (confirmation, report, failure, deletion) are still sent.
 - **LGPD**: consent texts versioned (`text_version`), consents logged with IP and UA; `/descadastrar/{token}` withdraws the newsletter and stops e-mails; data deletion = request by e-mail -> confirmation link -> lead, consents, analyses and results deleted (cascade).
 - **Observability**: JSON logs (stdlib formatter, no extra dep); `python -m raioxia stats` prints analyses per day, confirmation rate and newsletter opt-in rate from the DB.
 - **Tests**: still no real sites. DB tests run against the `compose.dev.yaml` Postgres (skipped if unreachable, like the browser tests); Redis/RQ via `fakeredis` with synchronous jobs; HTTP via FastAPI `TestClient`; e-mail via `ConsoleSender` capture; Turnstile via a fake verifier.
@@ -80,7 +81,7 @@ compose.dev.yaml        postgres 17 + redis 7 for local dev/tests on 127.0.0.1:1
 ## Commits
 
 1. [x] Deps, `settings`, `compose.dev.yaml`, DB models + first Alembic migration, JSON logging, `migrate` command
-2. [ ] `pipeline` + `tokens`: create analysis, confirm, expire, 24h reuse (DB tests)
+2. [x] `pipeline` + `tokens`: create analysis, confirm, expire, 24h reuse (DB tests); `analyses.newsletter_opt_in` (double opt-in for the newsletter)
 3. [ ] E-mail function: outbox table, `enqueue_email`, `send_email` job on queue `email`, ConsoleSender, Jinja2 templates (confirm, report, failed)
 4. [ ] Analysis RQ job + worker entry points (`python -m raioxia worker analysis|email`), retry/timeout, persistence of the report
 5. [ ] FastAPI app: `POST /api/analyses`, `/confirmar/{t}`, `/api/r/{token}`, `/healthz`
