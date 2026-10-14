@@ -1,0 +1,26 @@
+{% extends "_base.html" %}
+{% block head %}{% if report.status == "processing" %}<meta http-equiv="refresh" content="5">{% endif %}{% endblock %}
+{% block title %}Raio-X IA de {{ report.domain }}{% endblock %}
+{% block content %}
+<div class="card">
+<h1>Raio-X IA de {{ report.domain }}</h1>
+{% if report.status == "processing" %}
+<p>Estamos analisando o site. Esta página se atualiza sozinha; o resultado também vai para o seu e-mail.</p>
+{% elif report.status == "failed" %}
+<p>Não conseguimos analisar o site.</p><p>{{ report.error.message }}</p>
+{% elif report.status == "pending_confirmation" %}
+<p>Falta confirmar o e-mail: abra o link que enviamos para começar a análise.</p>
+{% elif report.status == "expired" %}
+<p>Este pedido expirou porque o e-mail não foi confirmado a tempo. Faça um novo pedido.</p>
+{% else %}
+{% if report.score is not none %}<p class="score">{{ report.score }}<span class="muted" style="font-size:18px"> de 100</span></p><p><strong>{{ report.band.label }}</strong></p>{% endif %}
+{% endif %}
+</div>
+{% for c in report.checks %}
+<div class="card">
+<h2 class="{{ c.status }}">{{ c.titulo }}</h2>
+<p>{{ c.explicacao }}</p>
+{% if c.como_corrigir %}<p><strong>Como corrigir:</strong> {{ c.como_corrigir }}</p>{% endif %}
+</div>
+{% endfor %}
+{% endblock %}

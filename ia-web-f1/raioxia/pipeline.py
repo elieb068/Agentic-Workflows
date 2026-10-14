@@ -6,6 +6,7 @@ Lifecycle of an analysis:
                          \--24h without confirmation--> expired
 """
 
+import ipaddress
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -18,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from raioxia.db import Analysis, CheckResultRow, Consent, Lead
 from raioxia.models import AnalysisReport
+from raioxia.net.ssrf import is_public_ip
 from raioxia.runner import AnalysisError, normalize_url
 from raioxia.tokens import hash_token, new_token
 
@@ -69,6 +71,9 @@ def submit(
         normalized = normalize_url(url)
     except AnalysisError as exc:
         raise SubmissionError(exc.code, exc.message) from exc
+    domain = _host(normalized.url)
+    if _is_internal_literal(domain):  # hostnames are checked when the worker resolves them
+        raise SubmissionError("blocked", "Não podemos analisar esse endereço.")
     address = normalize_email(email)
 
     lead = session.scalar(select(Lead).where(Lead.email == address))
@@ -83,7 +88,7 @@ def submit(
     analysis = Analysis(
         lead=lead,
         url=normalized.url,
-        domain=_host(normalized.url),
+        domain=domain,
         confirm_token_hash=hash_token(token),
         confirm_expires_at=now + CONFIRM_TTL,
         report_token=new_token(),
@@ -94,6 +99,13 @@ def submit(
     session.flush()
     log.info("analysis submitted", extra={"analysis_id": analysis.id, "domain": analysis.domain})
     return Submission(analysis, token)
+
+
+def _is_internal_literal(host: str) -> bool:
+    try:
+        return not is_public_ip(ipaddress.ip_address(host))
+    except ValueError:
+        return False
 
 
 def _host(url: str) -> str:

@@ -66,6 +66,9 @@ def test_same_email_reuses_the_lead_and_newsletter_is_optional(db):
         (dict(email="not-an-email"), "invalid_email"),
         (dict(url="ftp://exemplo.com.br"), "invalid_url"),
         (dict(url="localhost"), "invalid_url"),
+        (dict(url="http://192.168.0.1"), "blocked"),
+        (dict(url="https://[::1]/"), "blocked"),
+        (dict(url="169.254.169.254"), "blocked"),
     ],
 )
 def test_submit_refusals_have_ptbr_messages(db, kwargs, code):

@@ -37,7 +37,7 @@ build-backend = "setuptools.build_meta"
 include = ["raioxia*"]
 
 [tool.setuptools.package-data]
-raioxia = ["migrations/script.py.mako", "email/templates/*"]
+raioxia = ["migrations/script.py.mako", "email/templates/*", "api/templates/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
