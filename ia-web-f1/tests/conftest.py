@@ -298,3 +298,54 @@ def pipeline_env(db_sessionmaker, monkeypatch) -> PipelineEnv:
     monkeypatch.setattr(raioxia.jobs, "analyze", fake_analyze)
     monkeypatch.setattr(raioxia.email.jobs, "get_sender", lambda: env.sender)
     return env
+
+
+# --- API client (M2) -----------------------------------------------------------------------------
+
+
+class Clock:
+    def __init__(self):
+        from datetime import UTC, datetime
+
+        self.now = datetime(2026, 10, 14, 12, 0, tzinfo=UTC)
+
+    def __call__(self):
+        return self.now
+
+
+@pytest.fixture
+def clock():
+    return Clock()
+
+
+class FakeTurnstile:
+    def __init__(self):
+        self.ok = True
+        self.calls = []
+
+    def __call__(self, token, ip):
+        self.calls.append((token, ip))
+        return self.ok
+
+
+@pytest.fixture
+def turnstile():
+    return FakeTurnstile()
+
+
+@pytest.fixture
+def client(pipeline_env, db_sessionmaker, clock, turnstile):
+    """The real FastAPI app on the pipeline_env doubles, seen from client IP 203.0.113.9."""
+    from fastapi.testclient import TestClient
+
+    from raioxia.api.app import create_app
+    from raioxia.api.deps import AppDeps
+    from raioxia.api.ratelimit import RateLimiter, load_limits
+
+    app = create_app(AppDeps(
+        settings=pipeline_env.settings, sessions=db_sessionmaker, redis=pipeline_env.redis,
+        queues=pipeline_env.queues, clock=clock, turnstile=turnstile,
+        limiter=RateLimiter(pipeline_env.redis, load_limits()),
+    ))
+    with TestClient(app, client=("203.0.113.9", 50000), follow_redirects=False) as c:
+        yield c

@@ -7,7 +7,8 @@ Project definitions, scope and conventions live in [`CLAUDE.md`](CLAUDE.md). Pla
 ## Status
 
 - **M1 — analysis core: done.** 8 checks, score, CLI, network-free tests.
-- Next: **M2 — pipeline** (API, queue, worker, database, double opt-in, e-mails).
+- **M2 — pipeline: done.** FastAPI, PostgreSQL, RQ workers (analysis, e-mail), double opt-in, Turnstile, rate limits, Gmail API e-mail, LGPD (unsubscribe, deletion, retention), stats. Plan and decisions: [`.planning/M2-PLAN.md`](.planning/M2-PLAN.md).
+- Next: **M3 — front** (landing, report page, privacy/terms, `/bot`), then **M4 — deploy** on the Oracle VPS.
 
 ## Usage (CLI)
 

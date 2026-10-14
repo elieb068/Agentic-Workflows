@@ -2,11 +2,8 @@ import re
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from raioxia.api.app import create_app
-from raioxia.api.deps import AppDeps
 from raioxia.api.ratelimit import RateLimiter, load_limits
 from raioxia.db import Analysis, Consent, EmailOutbox, Lead
 
@@ -14,45 +11,6 @@ pytestmark = pytest.mark.db
 
 NOW = datetime(2026, 10, 14, 12, 0, tzinfo=UTC)
 FORM = {"url": "exemplo.com.br", "email": "Ana@Exemplo.com.br", "accepted_terms": True, "newsletter": True, "turnstile_token": "tok"}
-
-
-class Clock:
-    def __init__(self):
-        self.now = NOW
-
-    def __call__(self):
-        return self.now
-
-
-@pytest.fixture
-def clock():
-    return Clock()
-
-
-class FakeTurnstile:
-    def __init__(self):
-        self.ok = True
-        self.calls = []
-
-    def __call__(self, token, ip):
-        self.calls.append((token, ip))
-        return self.ok
-
-
-@pytest.fixture
-def turnstile():
-    return FakeTurnstile()
-
-
-@pytest.fixture
-def client(pipeline_env, db_sessionmaker, clock, turnstile):
-    app = create_app(AppDeps(
-        settings=pipeline_env.settings, sessions=db_sessionmaker, redis=pipeline_env.redis,
-        queues=pipeline_env.queues, clock=clock, turnstile=turnstile,
-        limiter=RateLimiter(pipeline_env.redis, load_limits()),
-    ))
-    with TestClient(app, client=("203.0.113.9", 50000), follow_redirects=False) as c:
-        yield c
 
 
 def confirm_link(env) -> str:

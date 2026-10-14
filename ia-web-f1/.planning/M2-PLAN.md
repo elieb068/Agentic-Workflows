@@ -1,4 +1,4 @@
-# M2 — Pipeline (approved 2026-10-14)
+# M2 — Pipeline (approved and done 2026-10-14)
 
 Goal: a submitted URL + e-mail becomes a confirmed lead, a queued job, a stored analysis and a report e-mail, with Turnstile, rate limits, double opt-in and LGPD consent records. M2 ships the JSON API and plain functional pages; the real front (landing, report page design) is M3.
 
@@ -89,7 +89,7 @@ compose.dev.yaml        postgres 17 + redis 7 for local dev/tests on 127.0.0.1:1
 6. [x] Turnstile (fails closed) + rate limits (Redis fixed windows, hashed keys; ip -> email (silent) -> domain)
 7. [x] LGPD: unsubscribe (GET page + POST/one-click), data deletion (request -> signed 24h link -> page -> POST), consent log, retention `purge` (also re-dispatches stuck e-mails; run daily from M4); `stats` command
 8. [x] `GmailApiSender` (service account, gmail.send; token refresh over an httpx transport adapter, no `requests`), `email-test` command, setup steps in README
-9. [ ] End-to-end test (submit -> confirm -> job -> report e-mail -> `/api/r/{token}`); README/ROADMAP update
+9. [x] End-to-end test with the real M1 runner on simulated sites (submit -> confirm -> job -> report e-mail -> `/api/r/{token}` -> unsubscribe); README/ROADMAP update
 
 ## Done criteria
 
@@ -97,3 +97,20 @@ compose.dev.yaml        postgres 17 + redis 7 for local dev/tests on 127.0.0.1:1
 - `pytest` passes with no access to real sites; DB tests run when Postgres is up.
 - Rate limits, Turnstile failure, expired/reused confirmation links and the 24h reuse path are covered by tests.
 - Consents are recorded with IP, UA and text version; unsubscribe and data deletion work end to end.
+
+## Outcome (2026-10-14)
+
+All 9 commits done; 428 tests pass (db tests against the dev PostgreSQL). Done criteria met, including a live run on Windows (uvicorn + both workers on the dev PostgreSQL/Redis, real Playwright analysis of www.primesolutions.net.br, both e-mails on the console).
+
+Deviations and additions to the plan above:
+- `analyses.newsletter_opt_in` (second migration): the newsletter starts only when the e-mail is confirmed.
+- Unsubscribe ends the newsletter; e-mails answering the person's own new request are still sent.
+- Client IP resolution moved from commit 6 to 5; internal IP literals refused at submit.
+- Unsubscribe/deletion links open a page with a button and only the POST acts (mail scanners prefetch links); Gmail one-click POST still works.
+- Deletion requests have their own rate-limit counters (same limits as submissions).
+- `purge` also re-dispatches stuck outbox rows; `email-test` command for the Gmail setup check.
+- Dev ports 15432/16379 on 127.0.0.1 (Windows Hyper-V reserved ranges; "localhost" stalls on IPv6 with Docker Desktop).
+- Workers: forking `Worker` on Linux, `SimpleWorker` + timer timeouts on Windows (dev only).
+
+Open for M4: run `purge` daily (cron), Google Cloud/Admin setup for the Gmail key, real Turnstile keys, `TRUSTED_PROXIES` for the shared Caddy network.
+
