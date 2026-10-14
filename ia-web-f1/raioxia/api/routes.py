@@ -23,6 +23,10 @@ router = APIRouter()
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
 ACCEPTED_MESSAGE = "Pronto! Enviamos um link de confirmação para o seu e-mail. A análise começa assim que você clicar nele."
+ACCEPTED = {"status": "confirm_email", "message": ACCEPTED_MESSAGE}
+TURNSTILE_MESSAGE = "Não conseguimos confirmar que você não é um robô. Recarregue a página e tente de novo."
+IP_LIMIT_MESSAGE = "Você fez muitos pedidos em pouco tempo. Tente de novo mais tarde."
+DOMAIN_LIMIT_MESSAGE = "Esse site já foi pedido muitas vezes hoje. Tente de novo amanhã."
 
 
 class SubmitIn(BaseModel):
@@ -39,23 +43,37 @@ def _error(status: int, code: str, message: str) -> JSONResponse:
 
 @router.post("/api/analyses", status_code=202)
 def submit(body: SubmitIn, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
+    ip, now = request_ip(request), app.clock()
+    if not app.turnstile(body.turnstile_token, ip):
+        return _error(403, "turnstile_failed", TURNSTILE_MESSAGE)
+    if not app.limiter.hit("ip", ip or "unknown", now):
+        log.info("submission rate limited", extra={"scope": "ip"})
+        return _error(429, "rate_limited", IP_LIMIT_MESSAGE)
     try:
-        submission = pipeline.submit(
-            session,
-            url=body.url,
-            email=body.email,
-            accepted_terms=body.accepted_terms,
-            newsletter=body.newsletter,
-            ip=request_ip(request),
-            user_agent=request.headers.get("user-agent", "")[:512] or None,
-            now=app.clock(),
-        )
+        valid = pipeline.validate_submission(url=body.url, email=body.email, accepted_terms=body.accepted_terms)
     except SubmissionError as exc:
         return _error(422, exc.code, exc.message)
+    if not app.limiter.hit("email", valid.email, now):
+        log.info("submission rate limited", extra={"scope": "email"})
+        return ACCEPTED  # same answer as a real submission: don't reveal anything about the address
+    if not app.limiter.hit("domain", valid.domain, now):
+        log.info("submission rate limited", extra={"scope": "domain", "domain": valid.domain})
+        return _error(429, "rate_limited", DOMAIN_LIMIT_MESSAGE)
+
+    submission = pipeline.submit(
+        session,
+        url=valid.url,
+        email=valid.email,
+        accepted_terms=body.accepted_terms,
+        newsletter=body.newsletter,
+        ip=ip,
+        user_agent=request.headers.get("user-agent", "")[:512] or None,
+        now=now,
+    )
     row = queue_confirm_email(session, submission.analysis, submission.confirm_token, base_url=app.settings.base_url)
     session.commit()
     dispatch(app.queues[EMAIL_QUEUE], [row.id])
-    return {"status": "confirm_email", "message": ACCEPTED_MESSAGE}
+    return ACCEPTED
 
 
 def _message(request: Request, app: AppDeps, status: int, title: str, message: str) -> HTMLResponse:

@@ -19,6 +19,8 @@ _NOINDEX_PREFIXES = ("/r/", "/confirmar/", "/api/", "/descadastrar/", "/excluir-
 
 
 def _production_deps() -> AppDeps:
+    from raioxia.api.ratelimit import RateLimiter, load_limits
+    from raioxia.api.turnstile import TurnstileVerifier
     from raioxia.db.engine import get_sessionmaker
     from raioxia.logs import configure_logging
     from raioxia.queues import ANALYSIS_QUEUE, EMAIL_QUEUE, get_queue, get_redis
@@ -33,6 +35,8 @@ def _production_deps() -> AppDeps:
         redis=redis,
         queues={name: get_queue(name, redis) for name in (ANALYSIS_QUEUE, EMAIL_QUEUE)},
         clock=lambda: datetime.now(UTC),
+        turnstile=TurnstileVerifier.from_settings(settings),
+        limiter=RateLimiter(redis, load_limits()),
     )
 
 

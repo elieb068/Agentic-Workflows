@@ -86,7 +86,7 @@ compose.dev.yaml        postgres 17 + redis 7 for local dev/tests on 127.0.0.1:1
 3. [x] E-mail function: outbox table, `queue_*_email` + `dispatch`, `send_email` job on queue `email`, ConsoleSender, Jinja2 templates (confirm, report, failed, deletion)
 4. [x] Analysis RQ job + worker entry points (`python -m raioxia worker analysis|email`), retry/timeout, persistence of the report (forking Worker on Linux; SimpleWorker + timer timeouts on Windows for dev)
 5. [x] FastAPI app: `POST /api/analyses`, `/confirmar/{t}`, `/api/r/{token}`, provisional `/r/{token}` page, `/healthz`; client IP (moved up from 6); internal IP literals refused at submit; security headers (no-referrer, noindex on token paths). Verified live on Windows: submit -> confirm -> real analysis -> report e-mail.
-6. [ ] Turnstile + rate limits
+6. [x] Turnstile (fails closed) + rate limits (Redis fixed windows, hashed keys; ip -> email (silent) -> domain)
 7. [ ] LGPD: unsubscribe, data deletion, consent log, retention `purge`; `stats` command
 8. [ ] `GmailApiSender` (service account, gmail.send) + setup steps for Google Cloud / Admin console / DNS in README
 9. [ ] End-to-end test (submit -> confirm -> job -> report e-mail -> `/api/r/{token}`); README/ROADMAP update

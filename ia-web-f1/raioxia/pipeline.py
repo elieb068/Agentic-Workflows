@@ -48,6 +48,27 @@ def normalize_email(raw: str) -> str:
 
 
 @dataclass(frozen=True)
+class ValidSubmission:
+    url: str  # normalized home URL
+    domain: str
+    email: str  # normalized
+
+
+def validate_submission(*, url: str, email: str, accepted_terms: bool) -> ValidSubmission:
+    """Pure checks, no database: lets the API apply per-e-mail/domain limits before writing anything."""
+    if not accepted_terms:
+        raise SubmissionError("terms_required", "Para receber o relatório, é preciso aceitar os termos e a política de privacidade.")
+    try:
+        normalized = normalize_url(url)
+    except AnalysisError as exc:
+        raise SubmissionError(exc.code, exc.message) from exc
+    domain = _host(normalized.url)
+    if _is_internal_literal(domain):  # hostnames are checked when the worker resolves them
+        raise SubmissionError("blocked", "Não podemos analisar esse endereço.")
+    return ValidSubmission(url=normalized.url, domain=domain, email=normalize_email(email))
+
+
+@dataclass(frozen=True)
 class Submission:
     analysis: Analysis
     confirm_token: str  # only ever in memory: goes into the confirmation e-mail
@@ -65,20 +86,10 @@ def submit(
     now: datetime,
 ) -> Submission:
     """Record the lead, its consents and a pending analysis. Nothing runs until the e-mail is confirmed."""
-    if not accepted_terms:
-        raise SubmissionError("terms_required", "Para receber o relatório, é preciso aceitar os termos e a política de privacidade.")
-    try:
-        normalized = normalize_url(url)
-    except AnalysisError as exc:
-        raise SubmissionError(exc.code, exc.message) from exc
-    domain = _host(normalized.url)
-    if _is_internal_literal(domain):  # hostnames are checked when the worker resolves them
-        raise SubmissionError("blocked", "Não podemos analisar esse endereço.")
-    address = normalize_email(email)
-
-    lead = session.scalar(select(Lead).where(Lead.email == address))
+    valid = validate_submission(url=url, email=email, accepted_terms=accepted_terms)
+    lead = session.scalar(select(Lead).where(Lead.email == valid.email))
     if lead is None:
-        lead = Lead(email=address)
+        lead = Lead(email=valid.email)
         session.add(lead)
     session.add(Consent(lead=lead, kind="report_terms", granted=True, text_version=CONSENT_TEXT_VERSION, ip=ip, user_agent=user_agent))
     if newsletter:
@@ -87,8 +98,8 @@ def submit(
     token = new_token()
     analysis = Analysis(
         lead=lead,
-        url=normalized.url,
-        domain=domain,
+        url=valid.url,
+        domain=valid.domain,
         confirm_token_hash=hash_token(token),
         confirm_expires_at=now + CONFIRM_TTL,
         report_token=new_token(),

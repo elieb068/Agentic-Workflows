@@ -1,0 +1,12 @@
+# Submission limits for POST /api/analyses (approved 2026-10-14).
+# Fixed windows in seconds; a request counts against every window of its scope.
+# Order of checks: ip -> email -> domain. Over the e-mail limit the API still answers
+# like a normal submission (no enumeration) but sends nothing.
+
+ip:
+  - {window: 3600, max: 3}
+  - {window: 86400, max: 10}
+email:
+  - {window: 86400, max: 2}
+domain:
+  - {window: 86400, max: 10}

@@ -7,12 +7,13 @@ from sqlalchemy import select
 
 from raioxia.api.app import create_app
 from raioxia.api.deps import AppDeps
+from raioxia.api.ratelimit import RateLimiter, load_limits
 from raioxia.db import Analysis, Consent, EmailOutbox, Lead
 
 pytestmark = pytest.mark.db
 
 NOW = datetime(2026, 10, 14, 12, 0, tzinfo=UTC)
-FORM = {"url": "exemplo.com.br", "email": "Ana@Exemplo.com.br", "accepted_terms": True, "newsletter": True}
+FORM = {"url": "exemplo.com.br", "email": "Ana@Exemplo.com.br", "accepted_terms": True, "newsletter": True, "turnstile_token": "tok"}
 
 
 class Clock:
@@ -28,11 +29,27 @@ def clock():
     return Clock()
 
 
+class FakeTurnstile:
+    def __init__(self):
+        self.ok = True
+        self.calls = []
+
+    def __call__(self, token, ip):
+        self.calls.append((token, ip))
+        return self.ok
+
+
 @pytest.fixture
-def client(pipeline_env, db_sessionmaker, clock):
+def turnstile():
+    return FakeTurnstile()
+
+
+@pytest.fixture
+def client(pipeline_env, db_sessionmaker, clock, turnstile):
     app = create_app(AppDeps(
         settings=pipeline_env.settings, sessions=db_sessionmaker, redis=pipeline_env.redis,
-        queues=pipeline_env.queues, clock=clock,
+        queues=pipeline_env.queues, clock=clock, turnstile=turnstile,
+        limiter=RateLimiter(pipeline_env.redis, load_limits()),
     ))
     with TestClient(app, client=("203.0.113.9", 50000), follow_redirects=False) as c:
         yield c
@@ -146,3 +163,44 @@ def test_healthz(client, pipeline_env):
     client.app.state.deps.redis = DownRedis()
     response = client.get("/healthz")
     assert response.status_code == 503 and response.json() == {"ok": False, "database": "ok", "redis": "ConnectionError"}
+
+
+def test_turnstile_failure_is_refused_before_anything_else(client, pipeline_env, turnstile, db):
+    turnstile.ok = False
+    response = client.post("/api/analyses", json=FORM)
+    assert response.status_code == 403 and response.json()["error"] == "turnstile_failed"
+    assert turnstile.calls == [("tok", "203.0.113.9")]
+    assert db.scalars(select(Analysis)).all() == [] and pipeline_env.sender.sent == []
+
+
+def test_ip_limit_three_per_hour(client, pipeline_env, clock):
+    for i in range(3):
+        assert client.post("/api/analyses", json=FORM | {"email": f"p{i}@exemplo.com.br", "url": f"s{i}.com.br"}).status_code == 202
+    blocked = client.post("/api/analyses", json=FORM | {"email": "p9@exemplo.com.br", "url": "s9.com.br"})
+    assert blocked.status_code == 429 and blocked.json()["error"] == "rate_limited"
+    clock.now = NOW + timedelta(hours=1)  # next hourly window (daily allows 10)
+    assert client.post("/api/analyses", json=FORM | {"email": "p8@exemplo.com.br", "url": "s8.com.br"}).status_code == 202
+    assert len(pipeline_env.sender.sent) == 4
+
+
+def test_email_limit_is_silent(client, pipeline_env, db, clock):
+    for i in range(2):
+        assert client.post("/api/analyses", json=FORM | {"url": f"s{i}.com.br"}).status_code == 202
+    clock.now = NOW + timedelta(hours=2)  # new hourly IP window, same day
+    third = client.post("/api/analyses", json=FORM | {"url": "s3.com.br", "email": "ANA@exemplo.com.br"})
+    assert third.status_code == 202 and third.json() == client.post("/api/analyses", json=FORM | {"email": "x@exemplo.com.br"}).json()
+    assert [e.to for e in pipeline_env.sender.sent].count("ana@exemplo.com.br") == 2
+    assert db.scalars(select(Analysis).where(Analysis.domain == "s3.com.br")).all() == []
+
+
+def test_domain_limit(client, pipeline_env):
+    from raioxia.api.ratelimit import Limits, Window
+
+    limits = load_limits()
+    generous_ip = Limits(ip=[Window(window=3600, max=100)], email=limits.email, domain=limits.domain)
+    client.app.state.deps.limiter = RateLimiter(pipeline_env.redis, generous_ip)
+    for i in range(10):
+        assert client.post("/api/analyses", json=FORM | {"email": f"d{i}@exemplo.com.br"}).status_code == 202, i
+    response = client.post("/api/analyses", json=FORM | {"email": "d10@exemplo.com.br"})
+    assert response.status_code == 429 and "amanhã" in response.json()["message"]
+    assert len(pipeline_env.sender.sent) == 10

@@ -10,6 +10,7 @@ from rq import Queue
 from sqlalchemy.orm import Session, sessionmaker
 
 from raioxia.api.client_ip import client_ip
+from raioxia.api.ratelimit import RateLimiter
 from raioxia.settings import Settings
 
 
@@ -20,6 +21,8 @@ class AppDeps:
     redis: Redis
     queues: dict[str, Queue]
     clock: Callable[[], datetime]
+    turnstile: Callable[[str, str | None], bool]  # (token, client ip) -> human?
+    limiter: RateLimiter
 
 
 def deps(request: Request) -> AppDeps:
