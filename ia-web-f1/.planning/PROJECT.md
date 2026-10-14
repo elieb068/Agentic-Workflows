@@ -21,7 +21,9 @@ Next: M2 (pipeline).
 
 ## Stack
 
-Python 3.12 + FastAPI · Redis + RQ · PostgreSQL · httpx + Playwright Chromium · Jinja2 + Tailwind · Resend/SES · Docker Compose + Caddy on own VPS.
+Python 3.12 + FastAPI · Redis + RQ · PostgreSQL · httpx + Playwright Chromium (pinned 1.63.0, matches the Docker image) · Jinja2 + Tailwind · Gmail API (Workspace service account, separate e-mail queue/worker) · Docker Compose.
+
+**Hosting (decided 2026-10-14):** Oracle VPS (ARM64: 4 cores, 23 GB RAM), domain `raiox.primesolutions.net.br` (Cloudflare DNS). The VPS already runs a production WordPress stack whose Caddy owns 80/443; Raio-X IA is a separate Compose project reached by that shared Caddy over a Docker network, with no host ports of its own. A placeholder site block and its Let's Encrypt certificate are already live. Verified on the VPS: test suite passes and a real analysis runs on ARM64.
 
 ## Key Constraints
 

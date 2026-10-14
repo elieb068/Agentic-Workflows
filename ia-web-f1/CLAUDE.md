@@ -69,9 +69,10 @@ Chamadas a LLMs, contas de usuário e login, pagamento, monitoramento recorrente
 - **Fila:** Redis + RQ (simples). Jobs com timeout (60s) e retry limitado.
 - **Banco:** PostgreSQL. Tabelas: `leads`, `consents` (com timestamp, IP e versão do texto aceito), `analyses`, `check_results`.
 - **Fetch/render:** httpx (HTTP) + Playwright Chromium (renderização), num worker separado.
-- **E-mail:** abstração com provider plugável (Resend ou Amazon SES) e templates Jinja2 em HTML responsivo.
+- **E-mail:** função separada de envio: o app só enfileira (tabela `email_outbox` + fila RQ `email` com worker próprio e retry). O envio usa a **Gmail API do Google Workspace** via service account com delegação em todo o domínio (escopo `gmail.send`), com uma caixa já existente de primesolutions.net.br como remetente. Sender plugável (console em dev/testes) e templates Jinja2 em HTML responsivo. (Decisão de 2026-10-14.)
 - **Front:** HTML server-side (Jinja2) + Tailwind, sem SPA. Precisa ser leve e bom para SEO. O visual final virá do Claude Design, então manter os templates fáceis de trocar.
-- **Infra:** Docker Compose (api, worker, redis, postgres, caddy). Caddy como reverse proxy com TLS automático. Deploy numa VPS Linux própria.
+- **Infra:** Docker Compose (api, worker, redis, postgres). Deploy na VPS Oracle (ARM64, 163.176.179.23) em `https://raiox.primesolutions.net.br`, ao lado de uma stack WordPress já em produção. O Caddy dessa stack (`wordpress_caddy`) já ocupa as portas 80/443 e faz o TLS automático; o Raio-X IA é um projeto Compose separado, **sem Caddy próprio**, alcançado pelo Caddy compartilhado via rede Docker. Nenhuma porta do Raio-X IA é publicada no host. (Decisão de 2026-10-14.)
+- **Playwright:** versão fixada (`playwright==1.63.0`) igual à tag da imagem `mcr.microsoft.com/playwright/python:v1.63.0-noble`. Atualizar as duas juntas.
 - **Config:** variáveis em `.env` (nunca commitar segredos) e um `.env.example` documentado.
 
 ## Requisitos não funcionais (importantes)
