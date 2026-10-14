@@ -9,7 +9,9 @@ dependencies = [
     "pyyaml>=6,<7",
     "selectolax>=1.0,<2",
     "defusedxml>=0.7,<1",
-    "playwright>=1.48,<2",
+    # Pinned: must match the mcr.microsoft.com/playwright/python image tag used in deploy,
+    # otherwise the image's bundled Chromium is the wrong version and check 5 is skipped.
+    "playwright==1.63.0",
 ]
 
 [project.optional-dependencies]

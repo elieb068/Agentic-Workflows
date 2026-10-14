@@ -24,7 +24,7 @@ from raioxia.net.ssrf import (
     validate_url,
 )
 
-DEFAULT_USER_AGENT = "RaioXIA-Bot/0.1 (+https://raioxia.com.br/bot)"
+DEFAULT_USER_AGENT = "RaioXIA-Bot/0.1 (+https://raiox.primesolutions.net.br/bot)"
 REDIRECT_STATUSES = {301, 302, 303, 307, 308}
 DEFAULT_HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,text/plain;q=0.8,*/*;q=0.5",

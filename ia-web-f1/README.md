@@ -86,3 +86,9 @@ python -m raioxia analyze exemplo.com.br --pretty
 VS Code picks up `.venv` and the pytest settings from `.vscode/settings.json` (Testing panel).
 
 Check 5 and the browser tests need Chromium for Playwright: run `playwright install chromium`, or point `CHROMIUM_EXECUTABLE` at an existing binary. Tests never touch the network.
+
+Playwright is pinned (`playwright==1.63.0`) to match the `mcr.microsoft.com/playwright/python:v1.63.0-noble` image used in production. Bump both together: with a mismatch the image's Chromium doesn't load, browser tests are skipped silently and check 5 returns `indeterminado`.
+
+## Production
+
+Runs on the Oracle VPS (ARM64) at `https://raiox.primesolutions.net.br`, next to an existing WordPress stack whose Caddy already owns ports 80/443. Raio-X IA is a separate Compose project without its own Caddy: the shared Caddy reaches it over a Docker network. Details land in `DEPLOY.md` (M4).

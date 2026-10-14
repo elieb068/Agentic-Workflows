@@ -32,15 +32,18 @@ async def test_renders_spa_through_safe_fetcher(web, make_fetcher):
     assert [r.path for r in web.requests] == ["/", "/static/js/main.js"]
 
 
-async def test_subresource_to_internal_address_is_blocked(web, make_fetcher):
+@pytest.mark.parametrize("scheme", ["http", "https"])
+async def test_subresource_to_internal_address_is_blocked(web, make_fetcher, scheme):
+    # Subresources use the page's scheme: Chromium drops http:// subresources on an https:// page as
+    # mixed content before route() sees them, so they would never reach the SSRF guard to be recorded.
+    metadata, admin = f"{scheme}://169.254.169.254/latest/meta-data/", f"{scheme}://10.0.0.1/admin"
     web.add(
-        "https://spa.example/",
-        '<html><body><p>oi</p><script src="http://169.254.169.254/latest/meta-data/"></script>'
-        '<iframe src="http://10.0.0.1/admin"></iframe></body></html>',
+        f"{scheme}://spa.example/",
+        f'<html><body><p>oi</p><script src="{metadata}"></script><iframe src="{admin}"></iframe></body></html>',
     )
     async with Renderer() as renderer:
-        result = await renderer.render("https://spa.example/", memoized(make_fetcher()))
-    assert sorted(result.blocked) == ["http://10.0.0.1/admin", "http://169.254.169.254/latest/meta-data/"]
+        result = await renderer.render(f"{scheme}://spa.example/", memoized(make_fetcher()))
+    assert sorted(result.blocked) == [admin, metadata]
     assert all(r.host == "spa.example" for r in web.requests)
 
 
