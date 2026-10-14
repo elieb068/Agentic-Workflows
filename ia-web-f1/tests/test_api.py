@@ -204,3 +204,58 @@ def test_domain_limit(client, pipeline_env):
     response = client.post("/api/analyses", json=FORM | {"email": "d10@exemplo.com.br"})
     assert response.status_code == 429 and "amanhã" in response.json()["message"]
     assert len(pipeline_env.sender.sent) == 10
+
+
+def _link(env, path_prefix: str) -> str:
+    for email in reversed(env.sender.sent):
+        found = re.search(rf"https://raiox\.primesolutions\.net\.br({path_prefix}\S+)", email.text)
+        if found:
+            return found.group(1)
+    raise AssertionError(f"no {path_prefix} link sent")
+
+
+def test_unsubscribe_needs_the_button_and_supports_one_click(client, pipeline_env, db):
+    client.post("/api/analyses", json=FORM)
+    client.get(confirm_link(pipeline_env))
+    link = _link(pipeline_env, "/descadastrar/")
+    page = client.get(link)
+    assert page.status_code == 200 and "<form method=\"post\"" in page.text
+    assert db.scalars(select(Lead)).one().newsletter  # a GET (mail scanner) changes nothing
+    done = client.post(link, data={"List-Unsubscribe": "One-Click"})  # what Gmail sends
+    assert done.status_code == 200
+    db.expire_all()
+    assert not db.scalars(select(Lead)).one().newsletter
+    assert client.get("/descadastrar/1.0.forged").status_code == 404
+    assert client.post("/descadastrar/1.0.forged").status_code == 404
+
+
+def test_data_deletion_flow(client, pipeline_env, db):
+    client.post("/api/analyses", json=FORM)
+    client.get(confirm_link(pipeline_env))
+    response = client.post("/api/excluir-dados", json={"email": "ANA@exemplo.com.br", "turnstile_token": "tok"})
+    assert response.status_code == 202
+    assert pipeline_env.sender.sent[-1].subject == "Confirme a exclusão dos seus dados do Raio-X IA"
+    link = _link(pipeline_env, "/excluir-dados/")
+    assert client.get(link).status_code == 200 and db.scalars(select(Lead)).all()  # page only
+    assert client.post(link).status_code == 200
+    db.expire_all()
+    assert db.scalars(select(Lead)).all() == [] and db.scalars(select(Analysis)).all() == []
+    assert db.scalars(select(Consent)).all() == [] and db.scalars(select(EmailOutbox)).all() == []
+    assert client.post(link).status_code == 200  # idempotent
+
+
+def test_deletion_request_does_not_reveal_unknown_addresses(client, pipeline_env, clock):
+    unknown = client.post("/api/excluir-dados", json={"email": "ninguem@exemplo.com.br", "turnstile_token": "tok"})
+    assert unknown.status_code == 202 and pipeline_env.sender.sent == []
+    client.post("/api/analyses", json=FORM)
+    known = client.post("/api/excluir-dados", json={"email": "ana@exemplo.com.br", "turnstile_token": "tok"})
+    assert known.json() == unknown.json()
+    assert client.post("/api/excluir-dados", json={"email": "nada", "turnstile_token": "tok"}).status_code == 422
+
+
+def test_expired_deletion_link(client, pipeline_env, clock):
+    client.post("/api/analyses", json=FORM)
+    client.post("/api/excluir-dados", json={"email": "ana@exemplo.com.br", "turnstile_token": "tok"})
+    link = _link(pipeline_env, "/excluir-dados/")
+    clock.now = NOW + timedelta(hours=25)
+    assert client.get(link).status_code == 404 and client.post(link).status_code == 404

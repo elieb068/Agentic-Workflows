@@ -10,13 +10,14 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from raioxia import pipeline
+from raioxia import pipeline, privacy
 from raioxia.api.deps import AppDeps, db_session, deps, request_ip
 from raioxia.db import Analysis
-from raioxia.email.outbox import dispatch, queue_confirm_email, queue_report_email
+from raioxia.email.outbox import DELETION_LINK_TTL, dispatch, queue_confirm_email, queue_deletion_email, queue_report_email
 from raioxia.jobs import enqueue_analysis
 from raioxia.pipeline import Confirmation, SubmissionError
 from raioxia.queues import ANALYSIS_QUEUE, EMAIL_QUEUE
+from raioxia.tokens import sign, verify
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -161,3 +162,86 @@ def healthz(session: Session = Depends(db_session), app: AppDeps = Depends(deps)
         checks["redis"] = type(exc).__name__
     healthy = all(v == "ok" for v in checks.values())
     return JSONResponse({"ok": healthy, **checks}, status_code=200 if healthy else 503)
+
+
+# --- LGPD -------------------------------------------------------------------------------------------
+# Links from e-mails open a page with a button; only the POST acts. Mail scanners that prefetch links
+# can't unsubscribe or delete anyone. Gmail's one-click unsubscribe POSTs straight to the same URL.
+
+DELETION_ACCEPTED = {
+    "status": "check_email",
+    "message": "Se esse e-mail estiver no Raio-X IA, enviamos um link para confirmar a exclusão dos dados.",
+}
+
+
+def _lead_from_link(app: AppDeps, purpose: str, token: str) -> int | None:
+    return verify(app.settings.secret_key.get_secret_value(), purpose, token, app.clock())
+
+
+def _action(request: Request, title: str, message: str, button: str, color: str = "#1d4ed8") -> HTMLResponse:
+    context = {"title": title, "message": message, "button": button, "color": color, "action": request.url.path}
+    return templates.TemplateResponse(request, "action.html", context)
+
+
+@router.get("/descadastrar/{token}")
+def unsubscribe_page(token: str, request: Request, app: AppDeps = Depends(deps)):
+    if _lead_from_link(app, "unsubscribe", token) is None:
+        return _message(request, app, 404, "Link inválido", "Esse link de descadastro não é válido.")
+    return _action(request, "Parar de receber e-mails", "Você não vai mais receber a newsletter nem outros e-mails do Raio-X IA que não tenha pedido.", "Não quero mais receber e-mails")
+
+
+@router.post("/descadastrar/{token}")
+def unsubscribe(token: str, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
+    lead_id = _lead_from_link(app, "unsubscribe", token)
+    if lead_id is None:
+        return _message(request, app, 404, "Link inválido", "Esse link de descadastro não é válido.")
+    privacy.unsubscribe(session, lead_id, ip=request_ip(request), user_agent=request.headers.get("user-agent", "")[:512] or None, now=app.clock())
+    session.commit()
+    return _message(request, app, 200, "Pronto", "Você não vai mais receber e-mails do Raio-X IA. Se pedir um novo relatório, enviaremos só o que for necessário para ele.")
+
+
+class DeletionIn(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    turnstile_token: str = Field(default="", max_length=4096)
+
+
+@router.post("/api/excluir-dados", status_code=202)
+def request_deletion(body: DeletionIn, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
+    ip, now = request_ip(request), app.clock()
+    if not app.turnstile(body.turnstile_token, ip):
+        return _error(403, "turnstile_failed", TURNSTILE_MESSAGE)
+    if not app.limiter.hit("ip", f"deletion:{ip or 'unknown'}", now):  # own counter, same limits as submissions
+        return _error(429, "rate_limited", IP_LIMIT_MESSAGE)
+    try:
+        address = pipeline.normalize_email(body.email)
+    except SubmissionError as exc:
+        return _error(422, exc.code, exc.message)
+    lead = privacy.find_lead(session, address) if app.limiter.hit("email", f"deletion:{address}", now) else None
+    if lead is None:
+        return DELETION_ACCEPTED  # same answer whether or not the address is known
+    token = sign(app.settings.secret_key.get_secret_value(), "delete", lead.id, now + DELETION_LINK_TTL)
+    row = queue_deletion_email(session, lead, token, base_url=app.settings.base_url)
+    session.commit()
+    dispatch(app.queues[EMAIL_QUEUE], [row.id])
+    return DELETION_ACCEPTED
+
+
+@router.get("/excluir-dados/{token}")
+def deletion_page(token: str, request: Request, app: AppDeps = Depends(deps)):
+    if _lead_from_link(app, "delete", token) is None:
+        return _message(request, app, 404, "Link inválido ou vencido", "Peça a exclusão de novo para receber um link novo.")
+    return _action(
+        request, "Excluir meus dados",
+        "Vamos apagar seu e-mail, seus consentimentos, seus pedidos e os relatórios deles. Isso não pode ser desfeito.",
+        "Excluir meus dados", color="#b91c1c",
+    )
+
+
+@router.post("/excluir-dados/{token}")
+def delete_data(token: str, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
+    lead_id = _lead_from_link(app, "delete", token)
+    if lead_id is None:
+        return _message(request, app, 404, "Link inválido ou vencido", "Peça a exclusão de novo para receber um link novo.")
+    privacy.delete_lead_data(session, lead_id)
+    session.commit()
+    return _message(request, app, 200, "Dados excluídos", "Apagamos os dados ligados a este e-mail no Raio-X IA.")
