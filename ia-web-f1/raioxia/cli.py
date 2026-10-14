@@ -1,4 +1,4 @@
-"""Command line: python -m raioxia analyze <url>"""
+"""Command line: python -m raioxia analyze <url> | migrate"""
 
 import argparse
 import asyncio
@@ -19,11 +19,14 @@ def build_parser() -> argparse.ArgumentParser:
     cmd.add_argument("--no-render", action="store_true", help="skip the Playwright render (check 5)")
     cmd.add_argument("--pretty", action="store_true", help="indent the JSON output")
     cmd.add_argument("--only", help=f"comma-separated check ids to run ({', '.join(REGISTRY)})")
+    sub.add_parser("migrate", help="apply database migrations (DATABASE_URL) up to the latest revision")
     return parser
 
 
 def main(argv: list[str] | None = None, fetcher_factory: Callable[[], SafeFetcher] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "migrate":
+        return migrate()
     checkers = None
     if args.only:
         ids = [i.strip() for i in args.only.split(",") if i.strip()]
@@ -43,4 +46,11 @@ def main(argv: list[str] | None = None, fetcher_factory: Callable[[], SafeFetche
         print(json.dumps({"error": exc.code, "message": exc.message}, ensure_ascii=False), file=sys.stderr)
         return 2
     print(report.model_dump_json(indent=2 if args.pretty else None))
+    return 0
+
+
+def migrate() -> int:
+    from raioxia.db.migrate import upgrade  # pipeline-only deps and settings: not needed by `analyze`
+
+    upgrade()
     return 0

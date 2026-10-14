@@ -31,3 +31,10 @@ def test_invalid_url_exits_2_with_ptbr_message(capsys):
 def test_unknown_check_id(capsys):
     assert main(["analyze", "site.example", "--only", "nope"]) == 2
     assert "nope" in capsys.readouterr().err
+
+
+def test_migrate_runs_alembic_upgrade(monkeypatch):
+    calls = []
+    monkeypatch.setattr("raioxia.db.migrate.upgrade", lambda: calls.append("head"))
+    assert main(["migrate"]) == 0
+    assert calls == ["head"]

@@ -67,8 +67,10 @@ To add a check (phases 2-4): subclass `Checker`, decorate with `@register`, impo
 ```bash
 python3.12 -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env
-pytest                      # browser tests are skipped if Chromium is unavailable
+cp .env.example .env        # then set SECRET_KEY (command in the file)
+docker compose -f compose.dev.yaml up -d   # PostgreSQL :15432 + Redis :16379 (also creates raioxia_test)
+python -m raioxia migrate
+pytest                      # browser tests skip without Chromium, db tests skip without PostgreSQL
 ```
 
 On Windows (PowerShell):
@@ -78,12 +80,16 @@ py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1          # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 pip install -e ".[dev]"
 playwright install chromium
-copy .env.example .env
+copy .env.example .env               # then set SECRET_KEY (command in the file)
+docker compose -f compose.dev.yaml up -d
+python -m raioxia migrate
 pytest
 python -m raioxia analyze exemplo.com.br --pretty
 ```
 
 VS Code picks up `.venv` and the pytest settings from `.vscode/settings.json` (Testing panel).
+
+Database tests (marked `db`) use the separate `raioxia_test` database of the dev PostgreSQL and rebuild its schema once per run; override with `TEST_DATABASE_URL`. New migrations: change `raioxia/db/models.py`, then `alembic revision --autogenerate -m "..."` with the dev database up, and review the generated file.
 
 Check 5 and the browser tests need Chromium for Playwright: run `playwright install chromium`, or point `CHROMIUM_EXECUTABLE` at an existing binary. Tests never touch the network.
 

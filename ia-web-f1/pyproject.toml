@@ -12,10 +12,22 @@ dependencies = [
     # Pinned: must match the mcr.microsoft.com/playwright/python image tag used in deploy,
     # otherwise the image's bundled Chromium is the wrong version and check 5 is skipped.
     "playwright==1.63.0",
+    # M2 pipeline
+    "pydantic-settings>=2.6,<3",
+    "email-validator>=2.2,<3",
+    "sqlalchemy>=2.0.36,<3",
+    "psycopg[binary]>=3.2,<4",
+    "alembic>=1.14,<2",
+    "redis>=5,<7",
+    "rq>=2,<3",
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.32,<1",
+    "jinja2>=3.1,<4",
+    "google-auth>=2.36,<3",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-asyncio>=0.24"]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "fakeredis>=2.26"]
 
 [build-system]
 requires = ["setuptools>=69"]
@@ -24,7 +36,13 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["raioxia*"]
 
+[tool.setuptools.package-data]
+raioxia = ["migrations/script.py.mako", "email/templates/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-markers = ["browser: needs Playwright Chromium (skipped if unavailable)"]
+markers = [
+    "browser: needs Playwright Chromium (skipped if unavailable)",
+    "db: needs the dev PostgreSQL from compose.dev.yaml (skipped if unreachable)",
+]

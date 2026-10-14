@@ -1,0 +1,40 @@
+# Local development and tests only: PostgreSQL + Redis. The app runs from the venv.
+# The production stack (api, worker, redis, postgres) comes in M4.
+#
+#   docker compose -f compose.dev.yaml up -d
+#
+# Ports are bound to localhost on uncommon numbers below 49152 (Windows reserves shifting
+# ranges above that for Hyper-V) to avoid clashing with other local services.
+
+name: raioxia-dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: raioxia
+      POSTGRES_PASSWORD: raioxia
+      POSTGRES_DB: raioxia
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/dev-init-db.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raioxia -d raioxia"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:16379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:

@@ -152,3 +152,65 @@ def browser_available() -> bool:
 def require_browser(browser_available):
     if not browser_available:
         pytest.skip("Chromium for Playwright not available (set CHROMIUM_EXECUTABLE)")
+
+
+# --- Database (M2) -------------------------------------------------------------
+# Tests marked `db` run against the dev PostgreSQL from compose.dev.yaml, in the separate
+# raioxia_test database, and are skipped when it is unreachable (like the browser tests).
+
+TEST_DATABASE_URL = "postgresql+psycopg://raioxia:raioxia@127.0.0.1:15432/raioxia_test"
+
+
+@pytest.fixture(scope="session")
+def db_url() -> str:
+    import os
+
+    import psycopg
+    from sqlalchemy.engine import make_url
+
+    url = os.environ.get("TEST_DATABASE_URL", TEST_DATABASE_URL)
+    parsed = make_url(url)
+    try:
+        psycopg.connect(
+            host=parsed.host, port=parsed.port, user=parsed.username, password=parsed.password,
+            dbname=parsed.database, connect_timeout=2,
+        ).close()
+    except psycopg.OperationalError:
+        pytest.skip("test PostgreSQL not reachable (docker compose -f compose.dev.yaml up -d)")
+    return url
+
+
+@pytest.fixture(scope="session")
+def db_engine(db_url):
+    """Engine on a freshly migrated test database (schema rebuilt once per test session)."""
+    from raioxia.db.engine import make_engine
+    from raioxia.db.migrate import downgrade, upgrade
+
+    downgrade(db_url)
+    upgrade(db_url)
+    engine = make_engine(db_url)
+    yield engine
+    engine.dispose()
+
+
+@pytest.fixture
+def db_sessionmaker(db_engine):
+    """Sessions inside one outer transaction that is rolled back after the test.
+
+    Code under test may call commit(): with create_savepoint it only releases a savepoint.
+    """
+    from sqlalchemy.orm import sessionmaker
+
+    connection = db_engine.connect()
+    outer = connection.begin()
+    factory = sessionmaker(bind=connection, expire_on_commit=False, join_transaction_mode="create_savepoint")
+    yield factory
+    outer.rollback()
+    connection.close()
+
+
+@pytest.fixture
+def db(db_sessionmaker):
+    session = db_sessionmaker()
+    yield session
+    session.close()

@@ -37,10 +37,10 @@ raioxia/
     gmail.py            GmailApiSender: Workspace service account + domain-wide delegation, gmail.send scope
     templates/          Jinja2: confirm, report, failed (HTML + text), PT-BR
   tokens.py             token generation/hashing, signed unsubscribe links
-  logging.py            JSON log formatter
+  logs.py               JSON log formatter (not logging.py: it would read like the stdlib module)
 config/
   limits.yaml           rate limit values (versioned, like scoring.yaml)
-compose.dev.yaml        postgres 17 + redis 7 for local dev/tests (no app containers; those are M4)
+compose.dev.yaml        postgres 17 + redis 7 for local dev/tests on 127.0.0.1:15432/16379 (no app containers; those are M4)
 ```
 
 ## Data model
@@ -79,7 +79,7 @@ compose.dev.yaml        postgres 17 + redis 7 for local dev/tests (no app contai
 
 ## Commits
 
-1. [ ] Deps, `settings`, `compose.dev.yaml`, DB models + first Alembic migration, JSON logging
+1. [x] Deps, `settings`, `compose.dev.yaml`, DB models + first Alembic migration, JSON logging, `migrate` command
 2. [ ] `pipeline` + `tokens`: create analysis, confirm, expire, 24h reuse (DB tests)
 3. [ ] E-mail function: outbox table, `enqueue_email`, `send_email` job on queue `email`, ConsoleSender, Jinja2 templates (confirm, report, failed)
 4. [ ] Analysis RQ job + worker entry points (`python -m raioxia worker analysis|email`), retry/timeout, persistence of the report
