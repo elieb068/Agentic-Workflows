@@ -98,3 +98,34 @@ Playwright is pinned (`playwright==1.63.0`) to match the `mcr.microsoft.com/play
 ## Production
 
 Runs on the Oracle VPS (ARM64) at `https://raiox.primesolutions.net.br`, next to an existing WordPress stack whose Caddy already owns ports 80/443. Raio-X IA is a separate Compose project without its own Caddy: the shared Caddy reaches it over a Docker network. Details land in `DEPLOY.md` (M4).
+
+## E-mail (Gmail API)
+
+E-mail is a separate function: the API and the analysis worker only write `email_outbox` rows; the `email` worker (`python -m raioxia worker email`) is the only process that sends. In development `EMAIL_SENDER=console` prints messages to the log.
+
+Production sends through the Gmail API with a Google Workspace **service account** and **domain-wide delegation**, impersonating `eric.lieb@primesolutions.net.br` and sending as the alias `Raio-X IA <raiox@primesolutions.net.br>`. One-time setup:
+
+1. **Google Cloud** ([console.cloud.google.com](https://console.cloud.google.com)), signed in with the Workspace admin: create (or pick) a project, then *APIs & Services → Library → Gmail API → Enable*.
+2. *IAM & Admin → Service Accounts → Create service account* (e.g. `raiox-mailer`). It needs no IAM roles.
+3. Open it → *Keys → Add key → Create new key → JSON*. Keep the file out of the repo and out of chats. If key creation is blocked, the organization policy `iam.disableServiceAccountKeyCreation` is on (default for newer Workspace orgs): override it for this project under *IAM & Admin → Organization Policies*.
+4. Copy the service account's **Unique ID** (numeric client ID) from its details page.
+5. **Workspace Admin** ([admin.google.com](https://admin.google.com)): *Security → Access and data control → API controls → Manage Domain Wide Delegation → Add new*, with that client ID and exactly one scope: `https://www.googleapis.com/auth/gmail.send`. Propagation usually takes minutes (up to 24h).
+6. In Gmail for `eric.lieb@`, *Settings → Accounts → Send mail as* must list `raiox@primesolutions.net.br` (done), otherwise Gmail rewrites `From` to the primary address.
+7. Server: store the key readable only by the app (e.g. `chmod 600`), then set `EMAIL_SENDER=gmail` and `GMAIL_SERVICE_ACCOUNT_FILE=/path/to/key.json`.
+8. Check: `python -m raioxia email-test eric.lieb@primesolutions.net.br` sends one message directly (bypassing the queue) and prints the Gmail message id; confirm it arrives `From: Raio-X IA <raiox@primesolutions.net.br>`. `unauthorized_client` means step 5 is missing or not yet propagated.
+
+The key can impersonate any user of the domain for the delegated scope (`gmail.send` only: it can send, not read). Treat it as a production secret; if it leaks, delete it under *Service Accounts → Keys* and access stops immediately.
+
+The domain has SPF (`include:_spf.google.com`), DKIM (`google._domainkey`) and DMARC (`p=none`, reports to `eric.lieb@`) in Cloudflare DNS.
+
+## Pipeline commands
+
+```bash
+python -m raioxia migrate                 # apply database migrations
+uvicorn raioxia.api.app:create_app --factory --host 0.0.0.0 --port 8000
+python -m raioxia worker analysis         # Playwright analyses (one process per job on Linux)
+python -m raioxia worker email            # the only process that sends e-mail
+python -m raioxia purge                   # daily: expiry, LGPD retention, stuck e-mails
+python -m raioxia stats --days 30         # requests, confirmation and newsletter opt-in rates
+python -m raioxia email-test <address>    # one direct test e-mail through the configured sender
+```

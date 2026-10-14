@@ -1,4 +1,4 @@
-"""Command line: python -m raioxia analyze <url> | migrate | worker <queue> | purge | stats"""
+"""Command line: python -m raioxia analyze <url> | migrate | worker <queue> | purge | stats | email-test <to>"""
 
 import argparse
 import asyncio
@@ -25,6 +25,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("purge", help="daily maintenance: expire, apply retention (LGPD), re-dispatch stuck e-mails")
     stats = sub.add_parser("stats", help="daily requests, confirmation rate and newsletter opt-ins")
     stats.add_argument("--days", type=int, default=30)
+    email_test = sub.add_parser("email-test", help="send one test e-mail through the configured sender (setup check)")
+    email_test.add_argument("to")
     return parser
 
 
@@ -41,6 +43,8 @@ def main(argv: list[str] | None = None, fetcher_factory: Callable[[], SafeFetche
         return purge()
     if args.command == "stats":
         return stats(args.days)
+    if args.command == "email-test":
+        return email_test(args.to)
     checkers = None
     if args.only:
         ids = [i.strip() for i in args.only.split(",") if i.strip()]
@@ -96,4 +100,29 @@ def stats(days: int) -> int:
 
     with session_scope() as session:
         print(metrics.format_table(metrics.daily(session, now=datetime.now(UTC), days=days)))
+    return 0
+
+
+def email_test(to: str) -> int:
+    """Bypasses the outbox on purpose: checks credentials, delegation and the From alias right now."""
+    from html import escape
+
+    from raioxia.email.base import EmailError, OutgoingEmail
+    from raioxia.email.jobs import get_sender
+    from raioxia.settings import get_settings
+
+    settings = get_settings()
+    paragraphs = [
+        "Este é um e-mail de teste do Raio-X IA.",
+        f"Remetente configurado: {settings.email_from_name} <{settings.email_from_address}>. Envio: {settings.email_sender}.",
+        "Confira se o remetente aparece exatamente assim (e não como o endereço principal da caixa).",
+    ]
+    text = "\n\n".join(paragraphs)
+    html = "".join(f"<p>{escape(p)}</p>" for p in paragraphs)
+    try:
+        message_id = get_sender().send(OutgoingEmail(to=to, subject="Teste de envio do Raio-X IA", html=html, text=text))
+    except EmailError as exc:
+        print(f"failed ({'transient' if exc.transient else 'permanent'}): {exc}", file=sys.stderr)
+        return 1
+    print(f"sent: {message_id}")
     return 0
