@@ -35,17 +35,17 @@
       <h3 class="font-display text-xl font-bold text-slate-100">{{ c.titulo }}</h3>
       <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-bold {{ c.pill }}">{{ icon(c.icon, 15) }}{{ c.label }}</span>
     </div>
-    <p class="whitespace-pre-line text-slate-300">{{ c.explicacao }}</p>
+    <p class="whitespace-pre-line wrap-anywhere text-slate-300">{{ c.explicacao }}</p>
     {% if c.como_corrigir %}
     <div class="flex flex-col gap-1.5 rounded-xl bg-brand-900 px-[18px] py-4">
       <strong class="text-sm tracking-wider text-accent-light uppercase">Como corrigir</strong>
-      <p class="whitespace-pre-line text-[15px] text-slate-200">{{ c.como_corrigir }}</p>
+      <p class="whitespace-pre-line wrap-anywhere text-[15px] text-slate-200">{{ c.como_corrigir }}</p>
     </div>
     {% endif %}
     {% if c.evidence_json %}
     <details>
       <summary class="min-h-7 text-sm text-slate-400">Ver dados técnicos</summary>
-      <pre class="mt-2.5 overflow-x-auto rounded-[10px] bg-brand-950 p-3.5 font-mono text-[13px] text-slate-300">{{ c.evidence_json }}</pre>
+      <pre tabindex="0" class="mt-2.5 overflow-x-auto rounded-[10px] bg-brand-950 p-3.5 font-mono text-[13px] text-slate-300">{{ c.evidence_json }}</pre>
     </details>
     {% endif %}
   </article>

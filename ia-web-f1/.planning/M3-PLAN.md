@@ -1,4 +1,4 @@
-# M3 — Front (approved 2026-10-15)
+# M3 — Front (approved and done 2026-10-15)
 
 Goal: the public site in PT-BR. A landing page with the form, the "check your e-mail" page, the real report at `/r/{token}`, privacy and terms, the `/bot` page and the data-deletion page. Server-side HTML (Jinja2) + Tailwind, no SPA, fast and good for SEO. The pages replace M2's provisional ones; the JSON API stays.
 
@@ -55,7 +55,7 @@ Goal: the public site in PT-BR. A landing page with the form, the "check your e-
 4. [x] Report CTAs (same commit as 3): newsletter one-click, consulting CTA, ad placeholders
 5. [x] `/privacidade`, `/termos` (controller and CNPJ above), `/bot`, `/excluir-dados`; footer links; `CONSENT_TEXT_VERSION` bumped to the published texts' date
 6. [x] Our own `robots.txt`, `sitemap.xml`, `llms.txt`, JSON-LD, OpenGraph; "our landing scores 100" test
-7. [ ] Accessibility/mobile pass, README/ROADMAP update
+7. [x] Accessibility/mobile pass (axe WCAG 2.1 AA, 1280/390/360 px; `scripts/a11y_audit.py`), README/ROADMAP update
 
 ## Done criteria
 
@@ -63,3 +63,16 @@ Goal: the public site in PT-BR. A landing page with the form, the "check your e-
 - Report page shows every state correctly and works at 360 px.
 - Our own site scores 100 with our own analyzer.
 - No third-party requests except Turnstile; no cookies; CSP enforced; `pytest` green.
+
+## Outcome (2026-10-15)
+
+All commits done (3 and 4 together: the report page and its CTAs share one template). 477 tests pass. Done criteria met: the browser flow works end to end with the Turnstile test keys; every report state renders; our own landing scores 100 on our own 8 checks (including the Playwright JavaScript check); only Turnstile is third party; no cookies; CSP enforced; axe finds 0 WCAG 2.1 AA violations on every page at 1280, 390 and 360 px.
+
+Deviations and additions:
+- **Accessibility fixes from the audit**: button fill `#17736f` (white on the brand's `#1b8581` is 4.45:1, under AA); muted text color `#a3b1c2` instead of Tailwind's slate-400 (borderline on cards); links in running text underlined; keyboard-focusable scrolling `<pre>`; distinct labels for the two ad slots; long URLs in report text wrap at 360 px.
+- **Opt-out list** (`config/blocked_domains.yaml`): the `/bot` page promises owners a way not to be analyzed, so it exists.
+- **Shared rules**: form and JSON API use the same submission and deletion logic (`raioxia/api/submissions.py`).
+- `SERVER_IP` setting for `/bot`; `CONSENT_TEXT_VERSION` = 2026-10-15; `tzdata` and `python-multipart` dependencies.
+
+Still to do outside the code: lawyer review of the privacy policy and terms before launch.
+

@@ -8,7 +8,8 @@ Project definitions, scope and conventions live in [`CLAUDE.md`](CLAUDE.md). Pla
 
 - **M1 — analysis core: done.** 8 checks, score, CLI, network-free tests.
 - **M2 — pipeline: done.** FastAPI, PostgreSQL, RQ workers (analysis, e-mail), double opt-in, Turnstile, rate limits, Gmail API e-mail, LGPD (unsubscribe, deletion, retention), stats. Plan and decisions: [`.planning/M2-PLAN.md`](.planning/M2-PLAN.md).
-- Next: **M3 — front** (landing, report page, privacy/terms, `/bot`), then **M4 — deploy** on the Oracle VPS.
+- **M3 — front: done.** Landing with the form, report page (all states), privacy/terms, `/bot`, data deletion, own robots/sitemap/llms.txt/JSON-LD; Prime Solutions brand; WCAG 2.1 AA (axe) clean at 1280/390/360 px. Plan: [`.planning/M3-PLAN.md`](.planning/M3-PLAN.md).
+- Next: **M4 — deploy** on the Oracle VPS.
 
 ## Usage (CLI)
 
@@ -130,3 +131,17 @@ python -m raioxia purge                   # daily: expiry, LGPD retention, stuck
 python -m raioxia stats --days 30         # requests, confirmation and newsletter opt-in rates
 python -m raioxia email-test <address>    # one direct test e-mail through the configured sender
 ```
+
+## Front (M3)
+
+Server-side Jinja2 pages in `raioxia/web/` (templates, `static/`, `styles/app.css`), styled with Tailwind v4. The brand tokens (colors, fonts) live in one `@theme` block in `raioxia/web/styles/app.css`; fonts and the logo are self-hosted, and the only third party is Cloudflare Turnstile (strict CSP).
+
+```bash
+python scripts/build_css.py           # rebuild raioxia/web/static/app.css (committed); --watch while editing
+python scripts/a11y_audit.py [token]  # axe WCAG 2.1 AA + overflow audit at 1280/390/360 px (app running on :8000)
+```
+
+The Tailwind standalone CLI (pinned 4.3.3, no Node) and axe-core are downloaded into `.tools/` on first use. A test fails if `app.css` is stale. Templates may not use inline styles or scripts (a test scans them: the CSP would block them).
+
+Owners who ask not to be analyzed go in `config/blocked_domains.yaml` (subdomains included). The `/bot` page shows `SERVER_IP` when set.
+

@@ -8,7 +8,9 @@ Revenue: ads on the site, newsletter (sponsorship/affiliates) and, later, a paid
 
 Full definitions: [`../CLAUDE.md`](../CLAUDE.md).
 
-## Current State (as of 2026-10-14)
+## Current State (as of 2026-10-15)
+
+M3 (front) is done: landing with the HTML form, the report page in every state with the newsletter one-click and "quero ajuda" e-mail, privacy policy and terms (controller Prime Solutions Tecnologia e Serviços de Apoio Administrativo, CNPJ 43.757.807/0001-86), `/bot`, data deletion, and our own robots/sitemap/llms.txt/JSON-LD (our landing scores 100 on our own checks). Prime Solutions brand from an approved Claude Design canvas. Next: M4 (deploy).
 
 M2 (pipeline) is done: submit -> double opt-in e-mail -> queued analysis -> stored report -> report e-mail, with Turnstile, rate limits, LGPD consent log, unsubscribe, data deletion and retention purge. E-mail is a separate function (outbox + own worker) sending through the Gmail API (Workspace service account; Google-side setup in the README still to do). Verified live on Windows with the dev PostgreSQL/Redis.
 
