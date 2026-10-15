@@ -3,6 +3,7 @@
 
 @import "tailwindcss" source(none);
 @source "../templates";
+@source "../report_view.py";  /* status and band classes are chosen in Python */
 
 @theme {
   --color-brand-950: #132229;

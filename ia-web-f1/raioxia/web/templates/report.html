@@ -1,24 +1,118 @@
 {% extends "base.html" %}
-{% block title %}Raio-X IA de {{ report.domain }}{% endblock %}
+{% from "partials/icons.html" import icon %}
+{% block title %}Raio-X IA de {{ r.domain }}{% endblock %}
+{% block head %}{% if r.status in ("processing", "pending_confirmation") %}<noscript><meta http-equiv="refresh" content="10"></noscript>{% endif %}{% endblock %}
 {% block content %}
-{# Interim layout (M3 commit 1); the full report design lands in commit 3. #}
-<div class="container-page max-w-[960px] py-12">
-  <section class="card p-8">
-    <h1 class="font-display text-3xl font-extrabold text-slate-100">{{ report.domain }}</h1>
-    {% if report.status == "done" and report.score is not none %}
-    <p class="font-display text-5xl font-extrabold text-slate-100">{{ report.score }} <span class="text-base font-normal text-slate-400">de 100</span></p>
-    <p class="font-bold">{{ report.band.label }}</p>
-    {% elif report.status == "failed" %}
-    <p>{{ report.error.message }}</p>
-    {% else %}
-    <p>Status: {{ report.status }}</p>
+{% if r.status == "done" %}
+<div class="container-page flex max-w-[960px] flex-col gap-7 pt-10 pb-[72px] sm:pt-12">
+  {% if newsletter_done %}
+  <div role="status" class="flex items-center gap-3 rounded-2xl border border-accent/45 bg-accent/10 px-5 py-3.5 text-accent-lighter">{{ icon("check", 20) }}Pronto! Você vai receber a {{ newsletter.name }}.</div>
+  {% endif %}
+  <section aria-labelledby="titulo" class="card flex flex-wrap items-center gap-8 rounded-3xl p-6 sm:p-8">
+    {% if r.score is not none %}
+    <div role="img" aria-label="Nota {{ r.score }} de 100" class="relative h-[168px] w-[168px] flex-none">
+      <svg aria-hidden="true" width="168" height="168" viewBox="0 0 168 168"><circle cx="84" cy="84" r="72" fill="none" stroke="rgba(148,163,184,0.18)" stroke-width="14"/><circle cx="84" cy="84" r="72" fill="none" stroke="{{ r.gauge_stroke }}" stroke-width="14" stroke-linecap="round" stroke-dasharray="{{ r.gauge_dash }}" transform="rotate(-90 84 84)"/></svg>
+      <div class="absolute inset-0 flex flex-col items-center justify-center">
+        <span class="font-display text-[52px] leading-none font-extrabold text-slate-100">{{ r.score }}</span>
+        <span class="text-sm text-slate-400">de 100</span>
+      </div>
+    </div>
     {% endif %}
+    <div class="flex min-w-0 flex-[1_1_360px] flex-col gap-2.5">
+      {% if r.band_label %}<span class="self-start rounded-full border px-3.5 py-1 text-sm font-bold {{ r.band_pill }}">{{ r.band_label }}</span>{% endif %}
+      <h1 id="titulo" class="font-display text-[32px] leading-tight font-extrabold break-all text-slate-100">{{ r.domain }}</h1>
+      {% if r.band_summary %}<p class="text-slate-300">{{ r.band_summary }}</p>{% endif %}
+      <p class="text-sm text-slate-400">{{ "Resultado da análise feita em" if r.reused else "Analisado em" }} {{ r.analyzed_at }} · {{ r.summary }}</p>
+    </div>
   </section>
-  {% for c in report.checks %}
-  <article class="card mt-4 p-6">
-    <h2 class="font-display text-xl font-bold text-slate-100">{{ c.titulo }}</h2>
-    <p class="whitespace-pre-line">{{ c.explicacao }}</p>
+
+  {% include "partials/ad_slot.html" with context %}
+
+  <h2 class="mt-3 font-display text-[26px] font-bold text-slate-100">O que encontramos</h2>
+  {% for c in r.checks %}
+  <article id="{{ c.id }}" class="flex flex-col gap-3 rounded-[18px] border bg-brand-800 px-5 py-6 sm:px-7 {{ c.border }}">
+    <div class="flex flex-wrap items-center justify-between gap-2.5">
+      <h3 class="font-display text-xl font-bold text-slate-100">{{ c.titulo }}</h3>
+      <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-bold {{ c.pill }}">{{ icon(c.icon, 15) }}{{ c.label }}</span>
+    </div>
+    <p class="whitespace-pre-line text-slate-300">{{ c.explicacao }}</p>
+    {% if c.como_corrigir %}
+    <div class="flex flex-col gap-1.5 rounded-xl bg-brand-900 px-[18px] py-4">
+      <strong class="text-sm tracking-wider text-accent-light uppercase">Como corrigir</strong>
+      <p class="whitespace-pre-line text-[15px] text-slate-200">{{ c.como_corrigir }}</p>
+    </div>
+    {% endif %}
+    {% if c.evidence_json %}
+    <details>
+      <summary class="min-h-7 text-sm text-slate-400">Ver dados técnicos</summary>
+      <pre class="mt-2.5 overflow-x-auto rounded-[10px] bg-brand-950 p-3.5 font-mono text-[13px] text-slate-300">{{ c.evidence_json }}</pre>
+    </details>
+    {% endif %}
   </article>
   {% endfor %}
+
+  <section aria-label="Próximos passos" class="mt-3 flex flex-wrap gap-5">
+    <div class="card flex min-w-0 flex-[1_1_380px] flex-col gap-3 border-accent/50 p-7">
+      <h2 class="font-display text-[22px] font-bold text-slate-100">Quer ajuda para corrigir?</h2>
+      <p class="text-slate-300">A {{ company.brand }} faz os ajustes com você: robots.txt, firewall, llms.txt, dados estruturados e renderização no servidor.</p>
+      <a href="{{ r.help_mailto }}" class="btn btn-primary mt-1 self-start">Quero ajuda {{ icon("arrow", 18) }}</a>
+    </div>
+    <div class="card flex min-w-0 flex-[1_1_380px] flex-col gap-3 p-7">
+      <h2 class="font-display text-[22px] font-bold text-slate-100">{{ newsletter.name }}</h2>
+      {% if r.lead_subscribed %}
+      <p class="text-slate-300">Você já recebe a newsletter: {{ newsletter.promise }}, toda semana.</p>
+      {% elif r.can_subscribe %}
+      <p class="text-slate-300">O que mudou nas IAs e como isso afeta o seu site, toda semana. Seu e-mail já está confirmado: é só um clique.</p>
+      <form method="post" action="/r/{{ r.token }}/newsletter" data-submit-once class="mt-1">
+        <button type="submit" class="btn btn-outline">Quero receber</button>
+      </form>
+      {% else %}
+      <p class="text-slate-300">{{ newsletter.promise[:1]|upper }}{{ newsletter.promise[1:] }}, toda semana. Assine no próximo Raio-X que você pedir.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  {% with slot="report-bottom", tall=True %}{% include "partials/ad_slot.html" %}{% endwith %}
+
+  <p class="text-sm text-slate-400">Este relatório é pessoal: o link funciona por 180 dias. Analisamos só a página inicial e os arquivos públicos da raiz; nada foi alterado no seu site.</p>
 </div>
+
+{% elif r.status in ("processing", "pending_confirmation") %}
+<div class="container-page flex justify-center py-14 sm:py-20">
+  <div role="status" aria-live="polite" data-poll-report="/api/r/{{ r.token }}" data-status="{{ r.status }}" class="card flex w-full max-w-[620px] flex-col gap-[22px] px-6 py-10 sm:px-8">
+    <div class="flex flex-col gap-1.5">
+      <span class="text-sm font-bold tracking-widest text-accent-light uppercase">{{ "Analisando" if r.status == "processing" else "Falta confirmar o e-mail" }}</span>
+      <h1 class="font-display text-[30px] leading-tight font-extrabold break-all text-slate-100">{{ r.domain }}</h1>
+      {% if r.status == "processing" %}
+      <p class="text-slate-400">Leva cerca de 2 minutos. Esta página se atualiza sozinha, e o resultado também vai para o seu e-mail: pode fechar se quiser.</p>
+      {% else %}
+      <p class="text-slate-400">Abra o link que enviamos para o seu e-mail. A análise começa assim que você clicar nele, e esta página se atualiza sozinha.</p>
+      {% endif %}
+    </div>
+    {% if r.status == "processing" %}
+    <div class="flex items-center gap-3 font-semibold text-slate-200">{{ icon("spinner", 22, "animate-spin text-accent motion-reduce:animate-none") }}Verificando 8 pontos do site</div>
+    <ul class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-x-5 gap-y-2 text-[15px] text-slate-400">
+      {% for c in checks %}<li class="flex items-center gap-2.5"><span aria-hidden="true" class="h-1.5 w-1.5 flex-none rounded-full bg-accent"></span>{{ c.title }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</div>
+
+{% else %}
+<div class="container-page flex justify-center py-14 sm:py-20">
+  <div class="card flex w-full max-w-[560px] flex-col gap-4 px-6 py-10 sm:px-8 {{ 'border-red-400/40' if r.status == 'failed' else '' }}">
+    <span class="flex h-14 w-14 items-center justify-center rounded-2xl {{ 'bg-red-400/10 text-red-300' if r.status == 'failed' else 'bg-slate-400/10 text-slate-300' }}">{{ icon("alert" if r.status == "failed" else "clock", 28) }}</span>
+    {% if r.status == "failed" %}
+    <h1 class="font-display text-[30px] leading-tight font-extrabold text-slate-100">Não conseguimos analisar <span class="break-all">{{ r.domain }}</span></h1>
+    <p class="text-[17px] text-slate-200">{{ r.error_message }}</p>
+    <p class="text-slate-400">Se o endereço estiver certo, o site pode estar fora do ar agora. Tente de novo mais tarde.</p>
+    {% else %}
+    <h1 class="font-display text-[30px] leading-tight font-extrabold text-slate-100">Este pedido expirou</h1>
+    <p class="text-[17px] text-slate-200">O e-mail não foi confirmado em 24 horas, então a análise de <span class="break-all">{{ r.domain }}</span> não foi feita.</p>
+    {% endif %}
+    <a href="/#formulario" class="btn btn-primary mt-2 self-start">Fazer um novo pedido</a>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
+{% block scripts %}<script src="{{ static_url('js/app.js') }}" defer></script>{% endblock %}

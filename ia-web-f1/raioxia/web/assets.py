@@ -22,7 +22,7 @@ def static_url(name: str) -> str:
 def css_sources_digest() -> str:
     """Hash of everything Tailwind reads (stylesheet source, templates, CLI version)."""
     h = hashlib.sha256(TAILWIND_VERSION.encode())
-    for path in [STYLES_SOURCE, *sorted(TEMPLATES_DIR.rglob("*.html"))]:
+    for path in [STYLES_SOURCE, WEB_DIR / "report_view.py", *sorted(TEMPLATES_DIR.rglob("*.html"))]:
         h.update(path.relative_to(WEB_DIR).as_posix().encode())
         h.update(path.read_bytes().replace(b"\r\n", b"\n"))
     return h.hexdigest()[:16]

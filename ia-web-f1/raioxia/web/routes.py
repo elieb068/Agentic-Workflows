@@ -3,11 +3,14 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from raioxia.api.deps import AppDeps, db_session, deps, request_ip
-from raioxia.api.routes import by_report_token, report_payload
+from raioxia import privacy
+from raioxia.api.routes import by_report_token
 from raioxia.api.submissions import process_submission
+from raioxia.web import report_view
 from raioxia.web.content import CHECKS, FAQ, STEPS
 from raioxia.web.pages import message, page
 
@@ -56,8 +59,22 @@ def submit_form(
 
 
 @router.get("/r/{token}")
-def report_page(token: str, request: Request, session: Session = Depends(db_session)):
+def report_page(token: str, request: Request, newsletter: str = "", session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
     analysis = by_report_token(session, token)
     if analysis is None:
         return message(request, 404, "Relatório não encontrado", "Confira se o endereço do relatório está completo.")
-    return page(request, "report.html", noindex=True, nav="report", report=report_payload(analysis), analysis=analysis)
+    view = report_view.build(session, analysis, base_url=app.settings.base_url)
+    return page(request, "report.html", noindex=True, nav="report", r=view, checks=CHECKS, newsletter_done=newsletter == "ok")
+
+
+@router.post("/r/{token}/newsletter")
+def report_newsletter(token: str, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
+    """One click from the report: the report link only reaches people who confirmed this e-mail."""
+    analysis = by_report_token(session, token)
+    if analysis is None or analysis.lead is None or analysis.confirmed_at is None:
+        return message(request, 404, "Relatório não encontrado", "Confira se o endereço do relatório está completo.")
+    privacy.subscribe(
+        session, analysis.lead, ip=request_ip(request), user_agent=request.headers.get("user-agent", "")[:512] or None, now=app.clock()
+    )
+    session.commit()
+    return RedirectResponse(f"/r/{token}?newsletter=ok", status_code=303)

@@ -36,6 +36,16 @@ def unsubscribe(session: Session, lead_id: int, *, ip: str | None, user_agent: s
     return True
 
 
+def subscribe(session: Session, lead: Lead, *, ip: str | None, user_agent: str | None, now: datetime) -> None:
+    """Newsletter opt-in for an already confirmed e-mail (from the report page). Idempotent."""
+    if lead.newsletter:
+        return
+    lead.newsletter = True
+    lead.unsubscribed_at = None
+    session.add(Consent(lead=lead, kind="newsletter", granted=True, text_version=pipeline.CONSENT_TEXT_VERSION, ip=ip, user_agent=user_agent))
+    log.info("lead subscribed from report", extra={"lead_id": lead.id})
+
+
 def find_lead(session: Session, email: str) -> Lead | None:
     return session.scalar(select(Lead).where(Lead.email == email))
 
