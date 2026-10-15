@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Raio-X IA{% endblock %}
+{% block content %}
+<div class="container-page flex justify-center py-14 sm:py-20">
+  <form method="post" action="{{ action }}" class="card flex w-full max-w-xl flex-col gap-4 p-8 sm:p-10">
+    <h1 class="font-display text-3xl leading-tight font-extrabold text-slate-100">{{ title }}</h1>
+    <p class="text-lg text-slate-200">{{ message }}</p>
+    <button type="submit" class="btn {{ 'bg-red-700 text-white hover:bg-red-800' if danger else 'btn-primary' }} mt-2 self-start text-base">{{ button }}</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,11 +1,9 @@
-"""M2 endpoints: submit, confirm, report (JSON + provisional page), health. The real pages come in M3."""
+"""JSON API, the e-mail link endpoints (confirm, unsubscribe, deletion) and health. HTML pages: raioxia.web."""
 
 import logging
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
@@ -18,10 +16,10 @@ from raioxia.jobs import enqueue_analysis
 from raioxia.pipeline import Confirmation, SubmissionError
 from raioxia.queues import ANALYSIS_QUEUE, EMAIL_QUEUE
 from raioxia.tokens import sign, verify
+from raioxia.web.pages import action, message
 
 log = logging.getLogger(__name__)
 router = APIRouter()
-templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
 ACCEPTED_MESSAGE = "Pronto! Enviamos um link de confirmação para o seu e-mail. A análise começa assim que você clicar nele."
 ACCEPTED = {"status": "confirm_email", "message": ACCEPTED_MESSAGE}
@@ -77,11 +75,6 @@ def submit(body: SubmitIn, request: Request, session: Session = Depends(db_sessi
     return ACCEPTED
 
 
-def _message(request: Request, app: AppDeps, status: int, title: str, message: str) -> HTMLResponse:
-    context = {"title": title, "message": message, "base_url": app.settings.base_url}
-    return templates.TemplateResponse(request, "message.html", context, status_code=status)
-
-
 @router.get("/confirmar/{token}")
 def confirm(token: str, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
     result, analysis = pipeline.confirm(session, token, now=app.clock())
@@ -94,9 +87,9 @@ def confirm(token: str, request: Request, session: Session = Depends(db_session)
     dispatch(app.queues[EMAIL_QUEUE], email_ids)
 
     if result is Confirmation.INVALID:
-        return _message(request, app, 404, "Link inválido", "Esse link de confirmação não existe. Confira se copiou o endereço inteiro.")
+        return message(request, 404, "Link inválido", "Esse link de confirmação não existe. Confira se copiou o endereço inteiro.")
     if result is Confirmation.EXPIRED:
-        return _message(request, app, 410, "Link expirado", "Esse link venceu porque passou mais de 24 horas. Faça um novo pedido.")
+        return message(request, 410, "Link expirado", "Esse link venceu porque passou mais de 24 horas. Faça um novo pedido.", link_label="Fazer um novo pedido")
     log.info("analysis confirmed", extra={"analysis_id": analysis.id, "result": result.value})
     return RedirectResponse(f"/r/{analysis.report_token}", status_code=303)
 
@@ -127,24 +120,16 @@ def report_payload(analysis: Analysis) -> dict:
     }
 
 
-def _by_report_token(session: Session, token: str) -> Analysis | None:
+def by_report_token(session: Session, token: str) -> Analysis | None:
     return session.scalar(select(Analysis).where(Analysis.report_token == token))
 
 
 @router.get("/api/r/{token}")
 def report_json(token: str, session: Session = Depends(db_session)):
-    analysis = _by_report_token(session, token)
+    analysis = by_report_token(session, token)
     if analysis is None:
         return _error(404, "not_found", "Relatório não encontrado.")
     return report_payload(analysis)
-
-
-@router.get("/r/{token}", response_class=HTMLResponse)
-def report_page(token: str, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
-    analysis = _by_report_token(session, token)
-    if analysis is None:
-        return _message(request, app, 404, "Relatório não encontrado", "Confira se o endereço do relatório está completo.")
-    return templates.TemplateResponse(request, "report.html", {"report": report_payload(analysis)})
 
 
 @router.get("/healthz")
@@ -178,26 +163,21 @@ def _lead_from_link(app: AppDeps, purpose: str, token: str) -> int | None:
     return verify(app.settings.secret_key.get_secret_value(), purpose, token, app.clock())
 
 
-def _action(request: Request, title: str, message: str, button: str, color: str = "#1d4ed8") -> HTMLResponse:
-    context = {"title": title, "message": message, "button": button, "color": color, "action": request.url.path}
-    return templates.TemplateResponse(request, "action.html", context)
-
-
 @router.get("/descadastrar/{token}")
 def unsubscribe_page(token: str, request: Request, app: AppDeps = Depends(deps)):
     if _lead_from_link(app, "unsubscribe", token) is None:
-        return _message(request, app, 404, "Link inválido", "Esse link de descadastro não é válido.")
-    return _action(request, "Parar de receber e-mails", "Você não vai mais receber a newsletter nem outros e-mails do Raio-X IA que não tenha pedido.", "Não quero mais receber e-mails")
+        return message(request, 404, "Link inválido", "Esse link de descadastro não é válido.")
+    return action(request, "Parar de receber e-mails", "Você não vai mais receber a newsletter nem outros e-mails do Raio-X IA que não tenha pedido.", "Não quero mais receber e-mails")
 
 
 @router.post("/descadastrar/{token}")
 def unsubscribe(token: str, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
     lead_id = _lead_from_link(app, "unsubscribe", token)
     if lead_id is None:
-        return _message(request, app, 404, "Link inválido", "Esse link de descadastro não é válido.")
+        return message(request, 404, "Link inválido", "Esse link de descadastro não é válido.")
     privacy.unsubscribe(session, lead_id, ip=request_ip(request), user_agent=request.headers.get("user-agent", "")[:512] or None, now=app.clock())
     session.commit()
-    return _message(request, app, 200, "Pronto", "Você não vai mais receber e-mails do Raio-X IA. Se pedir um novo relatório, enviaremos só o que for necessário para ele.")
+    return message(request, 200, "Pronto", "Você não vai mais receber e-mails do Raio-X IA. Se pedir um novo relatório, enviaremos só o que for necessário para ele.", tone="success")
 
 
 class DeletionIn(BaseModel):
@@ -229,11 +209,11 @@ def request_deletion(body: DeletionIn, request: Request, session: Session = Depe
 @router.get("/excluir-dados/{token}")
 def deletion_page(token: str, request: Request, app: AppDeps = Depends(deps)):
     if _lead_from_link(app, "delete", token) is None:
-        return _message(request, app, 404, "Link inválido ou vencido", "Peça a exclusão de novo para receber um link novo.")
-    return _action(
+        return message(request, 404, "Link inválido ou vencido", "Peça a exclusão de novo para receber um link novo.", link_href="/excluir-dados", link_label="Pedir a exclusão de novo")
+    return action(
         request, "Excluir meus dados",
         "Vamos apagar seu e-mail, seus consentimentos, seus pedidos e os relatórios deles. Isso não pode ser desfeito.",
-        "Excluir meus dados", color="#b91c1c",
+        "Excluir meus dados", danger=True,
     )
 
 
@@ -241,7 +221,7 @@ def deletion_page(token: str, request: Request, app: AppDeps = Depends(deps)):
 def delete_data(token: str, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
     lead_id = _lead_from_link(app, "delete", token)
     if lead_id is None:
-        return _message(request, app, 404, "Link inválido ou vencido", "Peça a exclusão de novo para receber um link novo.")
+        return message(request, 404, "Link inválido ou vencido", "Peça a exclusão de novo para receber um link novo.", link_href="/excluir-dados", link_label="Pedir a exclusão de novo")
     privacy.delete_lead_data(session, lead_id)
     session.commit()
-    return _message(request, app, 200, "Dados excluídos", "Apagamos os dados ligados a este e-mail no Raio-X IA.")
+    return message(request, 200, "Dados excluídos", "Apagamos os dados ligados a este e-mail no Raio-X IA.", tone="success")

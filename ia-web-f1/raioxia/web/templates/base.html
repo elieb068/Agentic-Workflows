@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Raio-X IA{% endblock %}</title>
+<meta name="description" content="{% block description %}Descubra em 2 minutos se o ChatGPT, o Gemini e o Claude conseguem ler o seu site. Grátis, com nota de 0 a 100 e o passo a passo para corrigir.{% endblock %}">
+{% if noindex %}<meta name="robots" content="noindex, nofollow">{% else %}<link rel="canonical" href="{{ base_url }}{{ canonical_path }}">{% endif %}
+<meta name="theme-color" content="#1a2e38">
+<meta property="og:site_name" content="Raio-X IA">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ self.title() }}">
+<meta property="og:description" content="{{ self.description() }}">
+<meta property="og:image" content="{{ base_url }}{{ static_url('img/icon-192.png') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ static_url('img/favicon-32.png') }}">
+<link rel="apple-touch-icon" href="{{ static_url('img/apple-touch-icon.png') }}">
+<link rel="preload" href="/static/fonts/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/outfit-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="{{ static_url('app.css') }}">
+{% block head %}{% endblock %}
+</head>
+<body>
+<a href="#conteudo" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-800 focus:px-4 focus:py-2">Ir para o conteúdo</a>
+<div class="flex min-h-screen flex-col">
+{% include "partials/header.html" %}
+<main id="conteudo" class="flex-1">
+{% block content %}{% endblock %}
+</main>
+{% include "partials/footer.html" %}
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,76 @@
+/* Tailwind v4 source. Build: python scripts/build_css.py (writes raioxia/web/static/app.css, committed).
+   Brand tokens come from www.primesolutions.net.br (2026-10-15); change the look here, in one place. */
+
+@import "tailwindcss" source(none);
+@source "../templates";
+
+@theme {
+  --color-brand-950: #132229;
+  --color-brand-925: #172832;
+  --color-brand-900: #1a2e38;
+  --color-brand-800: #223e4d;
+  --color-accent: #22a39f;
+  --color-accent-dark: #1b8581;
+  --color-accent-light: #5fd4cf;
+  --color-accent-lighter: #9be7e3;
+  --color-gradient-end: #60a5fa;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-latin-wght.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Outfit";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/outfit-latin-wght.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("fonts/jetbrains-mono-latin-wght.woff2") format("woff2-variations");
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-brand-900 font-sans text-base leading-relaxed text-slate-300 antialiased; }
+  a { @apply text-accent-light underline-offset-4 hover:text-accent-lighter; }
+  :focus-visible { outline: 3px solid var(--color-accent-light); outline-offset: 3px; }
+  summary { cursor: pointer; }
+}
+
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-[1120px] px-6; }
+  .logo-on-dark { filter: brightness(0) invert(1); }
+  .card { @apply rounded-[20px] border border-slate-400/20 bg-brand-800; }
+  .btn {
+    @apply inline-flex min-h-12 cursor-pointer items-center justify-center gap-2.5 rounded-full px-6 font-bold no-underline;
+  }
+  .btn-primary { @apply bg-accent-dark text-white hover:bg-[#166e6b] hover:text-white; }  /* white on accent-dark keeps AA contrast */
+  .btn-outline { @apply border border-accent bg-transparent text-accent-light hover:text-accent-lighter; }
+  .btn-ghost { @apply border border-slate-400/35 text-slate-200 hover:text-white; }
+  .field-input {
+    @apply min-h-12 w-full rounded-xl border border-slate-400/35 bg-brand-900 px-3.5 text-base text-slate-100 placeholder:text-slate-500;
+  }
+  .field-input[aria-invalid="true"] { @apply border-red-400; }
+  .text-gradient {
+    background: linear-gradient(90deg, var(--color-accent), var(--color-gradient-end));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .prose-legal p, .prose-legal li { @apply text-slate-300; }
+  .prose-legal h2 { @apply mt-8 font-display text-[22px] font-bold text-slate-100; }
+  .prose-legal ul { @apply list-disc space-y-1 pl-6; }
+}

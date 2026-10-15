@@ -24,6 +24,7 @@ dependencies = [
     "uvicorn[standard]>=0.32,<1",
     "jinja2>=3.1,<4",
     "google-auth>=2.36,<3",
+    "tzdata>=2024.1",  # IANA time zones on Windows (America/Sao_Paulo in pages)
 ]
 
 [project.optional-dependencies]
@@ -37,7 +38,7 @@ build-backend = "setuptools.build_meta"
 include = ["raioxia*"]
 
 [tool.setuptools.package-data]
-raioxia = ["migrations/script.py.mako", "email/templates/*", "api/templates/*"]
+raioxia = ["migrations/script.py.mako", "email/templates/*", "web/templates/**/*", "web/static/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

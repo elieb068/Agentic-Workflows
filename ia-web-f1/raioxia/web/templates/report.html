@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Raio-X IA de {{ report.domain }}{% endblock %}
+{% block content %}
+{# Interim layout (M3 commit 1); the full report design lands in commit 3. #}
+<div class="container-page max-w-[960px] py-12">
+  <section class="card p-8">
+    <h1 class="font-display text-3xl font-extrabold text-slate-100">{{ report.domain }}</h1>
+    {% if report.status == "done" and report.score is not none %}
+    <p class="font-display text-5xl font-extrabold text-slate-100">{{ report.score }} <span class="text-base font-normal text-slate-400">de 100</span></p>
+    <p class="font-bold">{{ report.band.label }}</p>
+    {% elif report.status == "failed" %}
+    <p>{{ report.error.message }}</p>
+    {% else %}
+    <p>Status: {{ report.status }}</p>
+    {% endif %}
+  </section>
+  {% for c in report.checks %}
+  <article class="card mt-4 p-6">
+    <h2 class="font-display text-xl font-bold text-slate-100">{{ c.titulo }}</h2>
+    <p class="whitespace-pre-line">{{ c.explicacao }}</p>
+  </article>
+  {% endfor %}
+</div>
+{% endblock %}
