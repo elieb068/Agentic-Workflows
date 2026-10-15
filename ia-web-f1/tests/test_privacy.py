@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import func, select
 
 from raioxia import pipeline, privacy, stats
-from raioxia.db import Analysis, CheckResultRow, Consent, EmailOutbox, Lead
+from raioxia.db import Analysis, Consent, EmailOutbox, Lead
 from tests.conftest import sample_report
 
 pytestmark = pytest.mark.db

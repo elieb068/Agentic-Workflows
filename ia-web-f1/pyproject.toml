@@ -25,6 +25,7 @@ dependencies = [
     "jinja2>=3.1,<4",
     "google-auth>=2.36,<3",
     "tzdata>=2024.1",  # IANA time zones on Windows (America/Sao_Paulo in pages)
+    "python-multipart>=0.0.18",  # HTML form posts
 ]
 
 [project.optional-dependencies]

@@ -50,7 +50,7 @@ Goal: the public site in PT-BR. A landing page with the form, the "check your e-
 
 0. [x] **Design** in Claude Design (approved 2026-10-15: https://claude.ai/artifact/AKKQDLPzFvWn295cxUE7uq): landing (desktop + 360 px), "verifique seu e-mail", report (done / processing / failed) and a legal page, with the Prime Solutions brand; user approval before commit 1
 1. [x] Web layer skeleton: `raioxia/web/` (templates, static, Tailwind build script + committed CSS, tokens), base layout, 404/500, CSP and static headers; M2 provisional pages removed
-2. [ ] Landing + `POST /pedido` (form, Turnstile widget, field errors, "verifique seu e-mail" page)
+2. [x] Landing + `POST /pedido` (form, Turnstile widget, field errors, "verifique seu e-mail" page)
 3. [ ] Report page: score, ordered check cards, evidence, edge caveat + Cloudflare steps, states, polling
 4. [ ] Report CTAs: newsletter one-click, consulting CTA, ad placeholders
 5. [ ] `/privacidade`, `/termos` (controller and CNPJ above), `/bot`, `/excluir-dados`; footer links; `CONSENT_TEXT_VERSION` bumped to the published texts' date
