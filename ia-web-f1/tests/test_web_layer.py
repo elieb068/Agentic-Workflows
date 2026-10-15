@@ -21,7 +21,8 @@ def test_templates_are_csp_clean(path):
     html = (TEMPLATES_DIR / path).read_text(encoding="utf-8")
     assert not re.search(r"\sstyle=", html), "inline style attribute"
     assert not re.search(r"<style", html), "inline <style>"
-    assert not re.search(r"<script(?![^>]*\bsrc=)", html), "inline <script>"
+    # JSON-LD blocks are data, never executed, so CSP doesn't apply to them.
+    assert not re.search(r'<script(?![^>]*\b(src=|type="application/ld\+json"))', html), "inline <script>"
     assert not re.search(r"\son[a-z]+=", html), "inline event handler"
 
 

@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from raioxia.api.deps import AppDeps, db_session, deps, request_ip
@@ -11,7 +11,8 @@ from raioxia import privacy
 from raioxia.api.routes import by_report_token
 from raioxia.api.submissions import process_deletion_request, process_submission
 from raioxia.net.fetcher import FetcherSettings
-from raioxia.web import report_view
+from raioxia.web import report_view, seo
+from raioxia.web.assets import static_url
 from raioxia.web.content import CHECKS, FAQ, STEPS
 from raioxia.web.pages import message, page
 
@@ -24,6 +25,7 @@ def _landing(request: Request, app: AppDeps, *, status: int = 200, values=None, 
     return page(
         request, "landing.html", status=status, nav="landing", canonical_path="/",
         steps=STEPS, checks=CHECKS, faq=FAQ, turnstile_site_key=app.settings.turnstile_site_key,
+        jsonld=seo.landing_jsonld(app.settings.base_url, static_url("img/prime-logo.png")),
         values=values or EMPTY_FORM, errors=errors or {}, form_error=form_error,
     )
 
@@ -119,3 +121,18 @@ def delete_request_form(
         request, "delete_request.html", status=outcome.status, turnstile_site_key=app.settings.turnstile_site_key,
         email=email, email_error=field_error, form_error=None if field_error else outcome.message,
     )
+
+
+@router.get("/robots.txt")
+def robots(app: AppDeps = Depends(deps)):
+    return PlainTextResponse(seo.robots_txt(app.settings.base_url), headers={"Cache-Control": "public, max-age=3600"})
+
+
+@router.get("/sitemap.xml")
+def sitemap(app: AppDeps = Depends(deps)):
+    return Response(seo.sitemap_xml(app.settings.base_url), media_type="application/xml", headers={"Cache-Control": "public, max-age=3600"})
+
+
+@router.get("/llms.txt")
+def llms(app: AppDeps = Depends(deps)):
+    return PlainTextResponse(seo.llms_txt(app.settings.base_url), headers={"Cache-Control": "public, max-age=3600"})

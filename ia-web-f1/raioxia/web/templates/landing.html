@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% from "partials/icons.html" import icon %}
 {% block title %}Raio-X IA · Sua porta está aberta para a IA?{% endblock %}
-{% block head %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endblock %}
+{% block head %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% for block in jsonld %}<script type="application/ld+json">{{ block|safe }}</script>
+{% endfor %}{% endblock %}
 {% block content %}
 <section class="container-page flex flex-wrap items-start gap-14 pt-12 pb-20 sm:pt-[72px] sm:pb-[88px]">
   <div class="flex min-w-0 flex-[1_1_460px] flex-col gap-6">
