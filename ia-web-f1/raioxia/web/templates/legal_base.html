@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="container-page prose-legal flex max-w-[760px] flex-col gap-4 pt-14 pb-20 text-base leading-[1.7]">
+  <header class="mb-2 flex flex-col gap-2">
+    <h1 class="font-display text-[40px] leading-tight font-extrabold text-slate-100">{% block heading %}{% endblock %}</h1>
+    {% block subheading %}{% endblock %}
+  </header>
+  {% block body %}{% endblock %}
+</article>
+{% endblock %}

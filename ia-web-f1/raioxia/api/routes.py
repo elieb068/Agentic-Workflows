@@ -11,12 +11,12 @@ from sqlalchemy.orm import Session
 from raioxia import pipeline, privacy
 from raioxia.api.deps import AppDeps, db_session, deps, request_ip
 from raioxia.db import Analysis
-from raioxia.api.submissions import ACCEPTED_MESSAGE, IP_LIMIT_MESSAGE, TURNSTILE_MESSAGE, process_submission
-from raioxia.email.outbox import DELETION_LINK_TTL, dispatch, queue_deletion_email, queue_report_email
+from raioxia.api.submissions import ACCEPTED_MESSAGE, DELETION_ACCEPTED_MESSAGE, process_deletion_request, process_submission
+from raioxia.email.outbox import dispatch, queue_report_email
 from raioxia.jobs import enqueue_analysis
-from raioxia.pipeline import Confirmation, SubmissionError
+from raioxia.pipeline import Confirmation
 from raioxia.queues import ANALYSIS_QUEUE, EMAIL_QUEUE
-from raioxia.tokens import sign, verify
+from raioxia.tokens import verify
 from raioxia.web.pages import action, message
 
 log = logging.getLogger(__name__)
@@ -126,10 +126,7 @@ def healthz(session: Session = Depends(db_session), app: AppDeps = Depends(deps)
 # Links from e-mails open a page with a button; only the POST acts. Mail scanners that prefetch links
 # can't unsubscribe or delete anyone. Gmail's one-click unsubscribe POSTs straight to the same URL.
 
-DELETION_ACCEPTED = {
-    "status": "check_email",
-    "message": "Se esse e-mail estiver no Raio-X IA, enviamos um link para confirmar a exclusão dos dados.",
-}
+DELETION_ACCEPTED = {"status": "check_email", "message": DELETION_ACCEPTED_MESSAGE}
 
 
 def _lead_from_link(app: AppDeps, purpose: str, token: str) -> int | None:
@@ -160,22 +157,9 @@ class DeletionIn(BaseModel):
 
 @router.post("/api/excluir-dados", status_code=202)
 def request_deletion(body: DeletionIn, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
-    ip, now = request_ip(request), app.clock()
-    if not app.turnstile(body.turnstile_token, ip):
-        return _error(403, "turnstile_failed", TURNSTILE_MESSAGE)
-    if not app.limiter.hit("ip", f"deletion:{ip or 'unknown'}", now):  # own counter, same limits as submissions
-        return _error(429, "rate_limited", IP_LIMIT_MESSAGE)
-    try:
-        address = pipeline.normalize_email(body.email)
-    except SubmissionError as exc:
-        return _error(422, exc.code, exc.message)
-    lead = privacy.find_lead(session, address) if app.limiter.hit("email", f"deletion:{address}", now) else None
-    if lead is None:
-        return DELETION_ACCEPTED  # same answer whether or not the address is known
-    token = sign(app.settings.secret_key.get_secret_value(), "delete", lead.id, now + DELETION_LINK_TTL)
-    row = queue_deletion_email(session, lead, token, base_url=app.settings.base_url)
-    session.commit()
-    dispatch(app.queues[EMAIL_QUEUE], [row.id])
+    outcome = process_deletion_request(session, app, email=body.email, turnstile_token=body.turnstile_token, ip=request_ip(request))
+    if not outcome.accepted:
+        return _error(outcome.status, outcome.code, outcome.message)
     return DELETION_ACCEPTED
 
 

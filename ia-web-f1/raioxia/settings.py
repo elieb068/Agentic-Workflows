@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     gmail_delegated_user: str = "eric.lieb@primesolutions.net.br"
     gmail_service_account_file: Path | None = None
 
+    # Public IP our fetcher connects from, shown on the /bot page so site owners can recognize it.
+    server_ip: str | None = None
+
     log_level: str = "INFO"
     log_json: bool = True
 

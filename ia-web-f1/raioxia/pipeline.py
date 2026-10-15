@@ -8,15 +8,20 @@ Lifecycle of an analysis:
 
 import ipaddress
 import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
+from functools import lru_cache
+from pathlib import Path
 
 import httpx
+import yaml
 from email_validator import EmailNotValidError, validate_email
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from raioxia.config import DEFAULT_CONFIG_DIR
 from raioxia.db import Analysis, CheckResultRow, Consent, Lead
 from raioxia.models import AnalysisReport
 from raioxia.net.ssrf import is_public_ip
@@ -28,7 +33,7 @@ log = logging.getLogger(__name__)
 CONFIRM_TTL = timedelta(hours=24)
 REUSE_WINDOW = timedelta(hours=24)
 # Version of the consent texts shown on the form (M3 holds the texts; bump both together).
-CONSENT_TEXT_VERSION = "2026-10-14"
+CONSENT_TEXT_VERSION = "2026-10-15"  # published privacy policy and terms (/privacidade, /termos)
 
 
 class SubmissionError(Exception):
@@ -65,6 +70,8 @@ def validate_submission(*, url: str, email: str, accepted_terms: bool) -> ValidS
     domain = _host(normalized.url)
     if _is_internal_literal(domain):  # hostnames are checked when the worker resolves them
         raise SubmissionError("blocked", "Não podemos analisar esse endereço.")
+    if is_opted_out(domain):
+        raise SubmissionError("opted_out", "O responsável por este site pediu para ele não ser analisado pelo Raio-X IA.")
     return ValidSubmission(url=normalized.url, domain=domain, email=normalize_email(email))
 
 
@@ -110,6 +117,22 @@ def submit(
     session.flush()
     log.info("analysis submitted", extra={"analysis_id": analysis.id, "domain": analysis.domain})
     return Submission(analysis, token)
+
+
+@lru_cache(maxsize=1)
+def _opted_out_domains() -> frozenset[str]:
+    config_dir = Path(os.environ.get("RAIOXIA_CONFIG_DIR", DEFAULT_CONFIG_DIR))
+    path = config_dir / "blocked_domains.yaml"
+    if not path.exists():
+        return frozenset()
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return frozenset(str(entry["domain"]).lower().strip(".") for entry in data.get("domains") or [])
+
+
+def is_opted_out(host: str) -> bool:
+    """Owners can ask not to be analyzed (/bot page); a listed domain covers its subdomains."""
+    host = host.lower().strip(".")
+    return any(host == d or host.endswith("." + d) for d in _opted_out_domains())
 
 
 def _is_internal_literal(host: str) -> bool:

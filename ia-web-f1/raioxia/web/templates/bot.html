@@ -1,0 +1,32 @@
+{% extends "legal_base.html" %}
+{% block title %}Sobre nosso robô · Raio-X IA{% endblock %}
+{% block description %}O que o RaioXIA-Bot acessa, quando, de onde e como pedir para um site não ser analisado.{% endblock %}
+{% block heading %}Sobre nosso robô{% endblock %}
+{% block subheading %}<p class="text-slate-400">Para quem cuida de sites e viu o {{ bot_name }} nos registros de acesso.</p>{% endblock %}
+{% block body %}
+<p class="text-[17px] text-slate-200">O {{ company.product }} verifica se um site está aberto para os robôs de inteligência artificial. Quando alguém pede um relatório, o nosso robô visita o site uma vez, como um visitante, e lê só o necessário.</p>
+
+<h2>Como ele se identifica</h2>
+<pre class="overflow-x-auto rounded-xl bg-brand-950 p-4 font-mono text-sm text-slate-200">{{ user_agent }}</pre>
+{% if server_ip %}<p>As requisições saem do nosso servidor, no endereço IP <span class="font-mono">{{ server_ip }}</span>.</p>{% endif %}
+
+<h2>Quando ele acessa um site</h2>
+<p>Só quando uma pessoa pede um Raio-X do site e confirma o próprio e-mail. Não rastreamos a internet por conta própria. Se o mesmo site foi analisado nas últimas 24 horas, reaproveitamos o resultado em vez de acessar de novo.</p>
+
+<h2>O que ele lê</h2>
+<ul>
+  <li>A página inicial e os arquivos públicos da raiz: robots.txt, llms.txt, llms-full.txt e o sitemap.</li>
+  <li>Alguns links do llms.txt, por amostragem, para ver se funcionam.</li>
+  <li>Os scripts e estilos da página inicial, quando a abrimos num navegador para comparar o texto que aparece com e sem JavaScript. Imagens, vídeos e fontes não são baixados.</li>
+</ul>
+<p>Cada análise faz algumas dezenas de requisições, de uma vez, com limite de tamanho e tempo. Nunca enviamos formulários nem tentamos acessar áreas restritas.</p>
+
+<h2>Por que ele também aparece como outros robôs</h2>
+<p>Para saber se um firewall ou CDN (como a Cloudflare) trata os robôs de IA de forma diferente, fazemos algumas requisições à página inicial com a identificação de robôs como GPTBot, ClaudeBot e PerplexityBot e comparamos as respostas. Essas requisições saem do nosso servidor{% if server_ip %} ({{ server_ip }}){% endif %}, não dos endereços oficiais desses robôs.</p>
+
+<h2>E o robots.txt?</h2>
+<p>O robots.txt do site é lido e analisado: ele é um dos pontos do relatório. Como cada análise é pedida por uma pessoa, o nosso robô funciona como um visitante e acessa a página inicial mesmo quando o robots.txt restringe robôs, do mesmo jeito que os assistentes de IA fazem quando um usuário pede.</p>
+
+<h2>Como pedir para o seu site não ser analisado</h2>
+<p>Escreva para <a href="mailto:{{ company.contact_email }}?subject={{ 'Não analisar o meu site' | urlencode }}">{{ company.contact_email }}</a> com o endereço do site, de um e-mail do mesmo domínio ou mostrando que você é responsável por ele. O site entra na nossa lista de exclusão e os novos pedidos são recusados.</p>
+{% endblock %}

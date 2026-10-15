@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from raioxia.api.deps import AppDeps, db_session, deps, request_ip
 from raioxia import privacy
 from raioxia.api.routes import by_report_token
-from raioxia.api.submissions import process_submission
+from raioxia.api.submissions import process_deletion_request, process_submission
+from raioxia.net.fetcher import FetcherSettings
 from raioxia.web import report_view
 from raioxia.web.content import CHECKS, FAQ, STEPS
 from raioxia.web.pages import message, page
@@ -78,3 +79,43 @@ def report_newsletter(token: str, request: Request, session: Session = Depends(d
     )
     session.commit()
     return RedirectResponse(f"/r/{token}?newsletter=ok", status_code=303)
+
+
+@router.get("/privacidade")
+def privacy_page(request: Request):
+    return page(request, "privacy.html")
+
+
+@router.get("/termos")
+def terms_page(request: Request):
+    return page(request, "terms.html")
+
+
+@router.get("/bot")
+def bot_page(request: Request, app: AppDeps = Depends(deps)):
+    user_agent = FetcherSettings().user_agent
+    return page(request, "bot.html", bot_name=user_agent.split(" ", 1)[0], user_agent=user_agent, server_ip=app.settings.server_ip)
+
+
+@router.get("/excluir-dados")
+def delete_request_page(request: Request, app: AppDeps = Depends(deps)):
+    return page(request, "delete_request.html", turnstile_site_key=app.settings.turnstile_site_key)
+
+
+@router.post("/excluir-dados")
+def delete_request_form(
+    request: Request,
+    email: Annotated[str, Form(max_length=320)] = "",
+    turnstile_token: Annotated[str, Form(alias="cf-turnstile-response", max_length=4096)] = "",
+    session: Session = Depends(db_session),
+    app: AppDeps = Depends(deps),
+):
+    outcome = process_deletion_request(session, app, email=email, turnstile_token=turnstile_token, ip=request_ip(request))
+    if outcome.accepted:
+        return message(request, 200, "Confira o seu e-mail", outcome.message, tone="success",
+                       detail="O link vale por 24 horas. Se não chegar, olhe a caixa de spam.")
+    field_error = outcome.message if outcome.field == "email" else None
+    return page(
+        request, "delete_request.html", status=outcome.status, turnstile_site_key=app.settings.turnstile_site_key,
+        email=email, email_error=field_error, form_error=None if field_error else outcome.message,
+    )

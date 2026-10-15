@@ -1,0 +1,65 @@
+{% extends "legal_base.html" %}
+{% block title %}Política de privacidade · Raio-X IA{% endblock %}
+{% block description %}Quais dados o Raio-X IA coleta, para quê, por quanto tempo e como exercer os seus direitos pela LGPD.{% endblock %}
+{% block heading %}Política de privacidade{% endblock %}
+{% block subheading %}<p class="text-slate-400">Versão de 15 de outubro de 2026</p>{% endblock %}
+{% block body %}
+<p class="text-[17px] text-slate-200">Esta política explica quais dados pessoais o {{ company.product }} coleta, para quê, por quanto tempo e como você exerce os seus direitos previstos na Lei Geral de Proteção de Dados (Lei nº 13.709/2018, LGPD).</p>
+
+<h2>1. Quem é o responsável pelos dados</h2>
+<p>O controlador é a {{ company.legal_name }}, CNPJ {{ company.cnpj }}. Para qualquer assunto de privacidade, inclusive falar com o nosso encarregado (DPO), escreva para <a href="mailto:{{ company.contact_email }}">{{ company.contact_email }}</a>.</p>
+
+<h2>2. Quais dados coletamos</h2>
+<ul>
+  <li>O endereço do site que você pede para analisar e o resultado da análise.</li>
+  <li>O seu e-mail.</li>
+  <li>O endereço IP e o navegador (user agent) usados no pedido, na confirmação do e-mail e em cada consentimento, com data e hora.</li>
+  <li>Se você aceitou receber a newsletter.</li>
+</ul>
+<p>Não pedimos nome, telefone nem documentos.</p>
+
+<h2>3. Para que usamos e com qual base legal</h2>
+<ul>
+  <li>Enviar o relatório que você pediu e o link de confirmação: execução do serviço solicitado por você (art. 7º, V).</li>
+  <li>Enviar a newsletter {{ newsletter.name }}: o seu consentimento, opcional e separado (art. 7º, I).</li>
+  <li>Evitar abuso e robôs (verificação Cloudflare Turnstile e limites de pedidos por IP, e-mail e site): legítimo interesse (art. 7º, IX).</li>
+  <li>Guardar o registro dos seus consentimentos: cumprimento de obrigação legal e defesa de direitos (art. 7º, II e VI).</li>
+</ul>
+
+<h2>4. Com quem compartilhamos</h2>
+<p>Não vendemos nem alugamos dados. Usamos fornecedores que tratam dados em nosso nome:</p>
+<ul>
+  <li>Google (Google Workspace / Gmail): envio dos e-mails.</li>
+  <li>Cloudflare: verificação anti-robô (Turnstile) e DNS.</li>
+  <li>Oracle Cloud: servidor onde o {{ company.product }} funciona.</li>
+</ul>
+<p>Esses fornecedores podem tratar dados fora do Brasil, com as garantias previstas no art. 33 da LGPD.</p>
+
+<h2>5. Por quanto tempo guardamos</h2>
+<ul>
+  <li>Pedidos com e-mail não confirmado: apagados em até 7 dias.</li>
+  <li>Relatórios: o link funciona por 180 dias. Depois disso, o e-mail e o IP são removidos e guardamos só o resultado técnico do site, para estatísticas.</li>
+  <li>Newsletter: até você se descadastrar.</li>
+  <li>Contadores anti-abuso: até 24 horas, sem guardar o seu e-mail ou IP em texto.</li>
+</ul>
+
+<h2>6. Cookies</h2>
+<p>O {{ company.product }} não usa cookies próprios nem ferramentas de análise de navegação. A verificação Cloudflare Turnstile, no formulário, funciona sem cookies de rastreamento.</p>
+
+<h2>7. Os seus direitos</h2>
+<p>Você pode, a qualquer momento: confirmar se tratamos dados seus, acessá-los, corrigi-los, pedir a anonimização ou a exclusão, pedir a portabilidade, saber com quem compartilhamos e revogar o consentimento (art. 18).</p>
+<ul>
+  <li>Newsletter: use o link "Não quero mais receber e-mails" em qualquer e-mail.</li>
+  <li>Exclusão: use a página <a href="/excluir-dados">Excluir meus dados</a>, ou escreva para <a href="mailto:{{ company.contact_email }}">{{ company.contact_email }}</a>.</li>
+</ul>
+<p>Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
+
+<h2>8. Segurança</h2>
+<p>O site usa HTTPS. Os links de relatório e de confirmação usam códigos impossíveis de adivinhar, e o acesso ao servidor e ao banco de dados é restrito. Os links do relatório são pessoais: evite compartilhá-los se não quiser que outras pessoas vejam o resultado.</p>
+
+<h2>9. O site analisado</h2>
+<p>A análise lê só a página inicial e os arquivos públicos da raiz do site informado (como robots.txt, llms.txt e sitemap), como qualquer visitante. Não coletamos dados pessoais de visitantes desse site. Saiba mais na página <a href="/bot">Sobre nosso robô</a>.</p>
+
+<h2>10. Mudanças nesta política</h2>
+<p>Se esta política mudar, a nova versão será publicada aqui com a data atualizada. Mudanças que afetem o seu consentimento serão avisadas por e-mail.</p>
+{% endblock %}

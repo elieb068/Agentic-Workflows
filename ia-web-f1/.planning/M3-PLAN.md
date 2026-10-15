@@ -53,7 +53,7 @@ Goal: the public site in PT-BR. A landing page with the form, the "check your e-
 2. [x] Landing + `POST /pedido` (form, Turnstile widget, field errors, "verifique seu e-mail" page)
 3. [x] Report page: score, ordered check cards, evidence, edge caveat + Cloudflare steps, states, polling
 4. [x] Report CTAs (same commit as 3): newsletter one-click, consulting CTA, ad placeholders
-5. [ ] `/privacidade`, `/termos` (controller and CNPJ above), `/bot`, `/excluir-dados`; footer links; `CONSENT_TEXT_VERSION` bumped to the published texts' date
+5. [x] `/privacidade`, `/termos` (controller and CNPJ above), `/bot`, `/excluir-dados`; footer links; `CONSENT_TEXT_VERSION` bumped to the published texts' date
 6. [ ] Our own `robots.txt`, `sitemap.xml`, `llms.txt`, JSON-LD, OpenGraph; "our landing scores 100" test
 7. [ ] Accessibility/mobile pass, README/ROADMAP update
 

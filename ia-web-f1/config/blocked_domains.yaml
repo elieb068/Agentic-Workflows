@@ -1,0 +1,6 @@
+# Sites whose owners asked not to be analyzed (see the /bot page). One entry per domain;
+# subdomains are covered too (example.com.br also blocks www.example.com.br).
+# Add the date and how the request arrived, for the record.
+domains: []
+#  - domain: example.com.br
+#    requested: 2026-10-15 by e-mail to raiox@

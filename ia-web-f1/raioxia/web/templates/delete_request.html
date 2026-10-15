@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Excluir meus dados · Raio-X IA{% endblock %}
+{% block description %}Peça a exclusão dos seus dados do Raio-X IA: cadastro, consentimentos, pedidos e relatórios.{% endblock %}
+{% block head %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endblock %}
+{% block content %}
+<div class="container-page flex justify-center py-14 sm:py-20">
+  <form method="post" action="/excluir-dados" novalidate data-submit-once class="card flex w-full max-w-xl flex-col gap-[18px] p-6 sm:p-10">
+    <h1 class="font-display text-3xl leading-tight font-extrabold text-slate-100">Excluir meus dados</h1>
+    <p class="text-slate-300">Informe o e-mail que você usou no Raio-X IA. Enviaremos para ele um link para confirmar a exclusão do cadastro, dos consentimentos, dos pedidos e dos relatórios.</p>
+    {% if form_error %}<div role="alert" class="rounded-xl border border-red-400/45 bg-red-400/10 px-3.5 py-3 text-sm text-red-200">{{ form_error }}</div>{% endif %}
+    <div class="flex flex-col gap-1.5">
+      <label for="email" class="text-sm font-semibold text-slate-200">Seu e-mail</label>
+      <input id="email" name="email" type="email" autocomplete="email" required maxlength="320" value="{{ email or '' }}" class="field-input"{% if email_error %} aria-invalid="true" aria-describedby="email-erro"{% endif %}>
+      {% if email_error %}<span id="email-erro" class="text-[13px] text-red-300">{{ email_error }}</span>{% endif %}
+    </div>
+    <div class="cf-turnstile min-h-[65px]" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" data-language="pt-br" data-size="flexible"></div>
+    <button type="submit" class="btn btn-primary self-start">Enviar o link de exclusão</button>
+    <p class="text-[13px] text-slate-400">Para só parar de receber e-mails, use o link "Não quero mais receber e-mails" em qualquer mensagem nossa.</p>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ static_url('js/app.js') }}" defer></script>{% endblock %}

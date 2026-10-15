@@ -1,0 +1,47 @@
+{% extends "legal_base.html" %}
+{% block title %}Termos de uso · Raio-X IA{% endblock %}
+{% block description %}As regras de uso do Raio-X IA, a ferramenta gratuita que verifica se o seu site está aberto para a IA.{% endblock %}
+{% block heading %}Termos de uso{% endblock %}
+{% block subheading %}<p class="text-slate-400">Versão de 15 de outubro de 2026</p>{% endblock %}
+{% block body %}
+<p class="text-[17px] text-slate-200">Ao pedir um relatório, você concorda com estes termos. Eles valem junto com a nossa <a href="/privacidade">Política de privacidade</a>.</p>
+
+<h2>1. Quem oferece o serviço</h2>
+<p>O {{ company.product }} é oferecido pela {{ company.legal_name }}, CNPJ {{ company.cnpj }} ("{{ company.brand }}"). Contato: <a href="mailto:{{ company.contact_email }}">{{ company.contact_email }}</a>.</p>
+
+<h2>2. O que o serviço faz</h2>
+<p>O {{ company.product }} lê a página inicial e os arquivos públicos da raiz de um site (como robots.txt, llms.txt e sitemap) e mostra, num relatório, se robôs de inteligência artificial conseguem acessar e entender esse site. O relatório é enviado por e-mail e fica disponível num link pessoal. O serviço é gratuito.</p>
+
+<h2>3. Uso permitido</h2>
+<ul>
+  <li>Você pode pedir relatórios de sites seus ou de qualquer site público, para fins legítimos.</li>
+  <li>Não é permitido usar o serviço para sobrecarregar sites, automatizar pedidos, contornar os limites de uso ou a verificação anti-robô, nem informar e-mails de outras pessoas sem autorização.</li>
+  <li>Podemos recusar ou interromper pedidos que pareçam abusivos, e o responsável por um site pode pedir para ele não ser analisado (veja <a href="/bot">Sobre nosso robô</a>).</li>
+</ul>
+
+<h2>4. Natureza do relatório</h2>
+<ul>
+  <li>O relatório é automático e mostra a situação do site no momento da análise. Ele é informativo e não é consultoria.</li>
+  <li>Alguns testes são indicativos. Por exemplo, o teste de bloqueio no firewall ou CDN não usa os endereços oficiais dos robôs, e o resultado real pode ser diferente.</li>
+  <li>Uma nota alta não garante que ChatGPT, Gemini, Claude, Perplexity ou qualquer outro serviço vai citar ou recomendar o seu site: isso depende de cada empresa.</li>
+  <li>Antes de alterar o seu site com base no relatório, confira as mudanças com quem cuida dele.</li>
+</ul>
+
+<h2>5. Disponibilidade</h2>
+<p>Fazemos o possível para manter o serviço no ar, mas ele é oferecido como está, sem garantia de disponibilidade contínua. Podemos mudar, suspender ou encerrar o serviço, os testes ou a forma de calcular a nota a qualquer momento.</p>
+
+<h2>6. Responsabilidade</h2>
+<p>Na medida permitida pela lei, a {{ company.brand }} não se responsabiliza por decisões tomadas com base no relatório, nem por danos indiretos causados pelo uso ou pela indisponibilidade do serviço. Nada nestes termos limita direitos que a lei garante ao consumidor.</p>
+
+<h2>7. Propriedade intelectual</h2>
+<p>Você pode usar e compartilhar o seu relatório como quiser. As marcas {{ company.product }} e {{ company.brand }}, o site e os textos do serviço pertencem à {{ company.brand }}.</p>
+
+<h2>8. Comunicações</h2>
+<p>Enviamos apenas os e-mails necessários para o pedido (confirmação, relatório ou aviso de falha) e, se você aceitar, a newsletter {{ newsletter.name }}, que pode ser cancelada a qualquer momento pelo link em cada e-mail.</p>
+
+<h2>9. Mudanças nestes termos</h2>
+<p>Se estes termos mudarem, a nova versão será publicada aqui com a data atualizada. Pedidos feitos depois da mudança seguem a nova versão.</p>
+
+<h2>10. Lei aplicável</h2>
+<p>Estes termos seguem as leis do Brasil. Se você for consumidor, vale o foro do seu domicílio, conforme o Código de Defesa do Consumidor.</p>
+{% endblock %}
