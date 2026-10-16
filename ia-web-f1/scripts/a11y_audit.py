@@ -14,6 +14,9 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from raioxia.web.guides import GUIDES  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 AXE_VERSION = "4.10.3"
 AXE = ROOT / ".tools" / f"axe-{AXE_VERSION}.min.js"
@@ -33,7 +36,8 @@ def main() -> int:
     parser.add_argument("token", nargs="?", help="a report token from the dev database, to audit /r/<token>")
     parser.add_argument("--base", default="http://127.0.0.1:8000")
     args = parser.parse_args()
-    paths = ["/", "/privacidade", "/termos", "/bot", "/excluir-dados", "/nao-existe"] + ([f"/r/{args.token}"] if args.token else [])
+    paths = ["/", "/guias", *(g.path for g in GUIDES), "/privacidade", "/termos", "/bot", "/excluir-dados", "/nao-existe"]
+    paths += [f"/r/{args.token}"] if args.token else []
     failures = 0
     with sync_playwright() as p:
         browser = p.chromium.launch()

@@ -1,0 +1,59 @@
+{% extends "guides/guide_base.html" %}
+{% block body %}
+<p>O <strong>robots.txt</strong> é um arquivo de texto na raiz do site (por exemplo, <code>seusite.com.br/robots.txt</code>) que diz aos robôs o que eles podem ler. Os robôs de IA, como os do ChatGPT, do Claude e do Perplexity, consultam esse arquivo antes de visitar as suas páginas. Se ele bloqueia esses robôs, o seu site pode ficar fora das respostas da IA.</p>
+
+<h2>Nem todo robô de IA é igual</h2>
+<p>As empresas de IA usam robôs diferentes para tarefas diferentes, e isso muda o que você deve liberar:</p>
+<ul>
+  <li><strong>Robôs de busca e respostas</strong> (OAI-SearchBot, Claude-SearchBot, PerplexityBot, Googlebot, Bingbot): levam o seu site para as respostas e os resultados. Bloquear esses robôs tira você das respostas.</li>
+  <li><strong>Robôs de treino</strong> (GPTBot, ClaudeBot, Google-Extended, Applebot-Extended, CCBot): coletam conteúdo para treinar modelos. Bloquear é uma escolha legítima e não tira o seu site das respostas.</li>
+  <li><strong>Robôs a pedido de uma pessoa</strong> (ChatGPT-User, Claude-User, Perplexity-User): abrem uma página quando alguém pede ao assistente. Como agem a pedido de uma pessoa, a OpenAI e a Perplexity avisam que eles podem não seguir o robots.txt.</li>
+</ul>
+<p>A lista completa, com os links da documentação de cada empresa, está no guia <a href="/guias/robos-de-ia">Robôs de IA: quem são e o que cada um faz</a>.</p>
+
+<h2>Como ver o seu robots.txt</h2>
+<p>Abra <code>https://seusite.com.br/robots.txt</code> no navegador. Cada bloco começa com <code>User-agent:</code> (para quem vale a regra) e segue com <code>Allow:</code> (pode) e <code>Disallow:</code> (não pode). <code>Disallow: /</code> bloqueia o site inteiro.</p>
+<p>Fique atento a dois detalhes:</p>
+<ul>
+  <li>Um robô segue <strong>só o bloco mais específico</strong> que cita o nome dele. Se existe um bloco <code>User-agent: GPTBot</code>, o GPTBot ignora o bloco <code>User-agent: *</code>.</li>
+  <li>Se o arquivo não existe (erro 404), tudo está liberado. Se ele dá erro de servidor (5xx), muitos robôs entendem que tudo está bloqueado.</li>
+</ul>
+
+<h2>Exemplo 1: liberar todos os robôs de IA</h2>
+<p>Se você quer o seu site nas respostas e não se importa com o treino de modelos, o mais simples é não bloquear ninguém:</p>
+<pre tabindex="0">User-agent: *
+Allow: /
+
+Sitemap: https://seusite.com.br/sitemap.xml</pre>
+
+<h2>Exemplo 2: aparecer nas respostas, mas não treinar modelos</h2>
+<p>Libera os robôs de busca e bloqueia só os de treino:</p>
+<pre tabindex="0">User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+Disallow: /
+
+User-agent: *
+Allow: /
+
+Sitemap: https://seusite.com.br/sitemap.xml</pre>
+<p>O <code>Google-Extended</code> não é um robô de verdade: é só um nome que o Google lê no robots.txt para decidir se usa o seu conteúdo para treinar o Gemini. Segundo o Google, bloqueá-lo não afeta o seu site na Pesquisa Google.</p>
+
+<h2>Erros comuns</h2>
+<ul>
+  <li><strong>Nomes antigos.</strong> Regras para <code>anthropic-ai</code> ou <code>Claude-Web</code> não fazem nada: a Anthropic usa hoje <code>ClaudeBot</code>, <code>Claude-SearchBot</code> e <code>Claude-User</code>.</li>
+  <li><strong>Bloquear tudo para "se proteger".</strong> Um <code>User-agent: *</code> com <code>Disallow: /</code> esconde o site de todos, inclusive do Google.</li>
+  <li><strong>Liberar só a página inicial.</strong> Se as páginas internas estão bloqueadas, a IA conhece o seu nome, mas não os seus serviços e preços.</li>
+  <li><strong>Robots.txt certo, firewall bloqueando.</strong> A Cloudflare e outros firewalls podem barrar os robôs antes que eles leiam o robots.txt. Veja o guia <a href="/guias/cloudflare-bloqueando-ia">Cloudflare bloqueando a IA</a>.</li>
+</ul>
+
+<h2>Onde editar</h2>
+<ul>
+  <li><strong>WordPress:</strong> plugins de SEO como Yoast e Rank Math têm um editor de robots.txt. Sem plugin, crie o arquivo na pasta principal do site.</li>
+  <li><strong>Cloudflare:</strong> se a opção de robots.txt gerenciado estiver ligada, a Cloudflare acrescenta regras ao seu arquivo. Confira o resultado final no navegador.</li>
+  <li><strong>Wix, Shopify e outras plataformas:</strong> procure "robots.txt" nas configurações de SEO.</li>
+</ul>
+<p>Para a especificação completa, veja a <a href="https://www.rfc-editor.org/rfc/rfc9309">RFC 9309</a> e o <a href="https://developers.google.com/search/docs/crawling-indexing/robots/intro">guia do Google sobre robots.txt</a>.</p>
+{% endblock %}

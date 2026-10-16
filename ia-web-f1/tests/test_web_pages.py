@@ -46,7 +46,7 @@ def test_bot_page(client, pipeline_env):
 def test_deletion_form_flow(client, pipeline_env, turnstile):
     page = client.get("/excluir-dados")
     assert page.status_code == 200 and 'action="/excluir-dados"' in page.text and "cf-turnstile" in page.text
-    assert '<link rel="canonical"' in page.text  # the form page is public, unlike the token links
+    assert '<meta name="robots" content="noindex, nofollow">' in page.text  # a utility form: kept out of search
 
     unknown = client.post("/excluir-dados", data={"email": "ninguem@exemplo.com.br", "cf-turnstile-response": "tok"})
     assert unknown.status_code == 200 and "Confira o seu e-mail" in unknown.text and pipeline_env.sender.sent == []

@@ -15,7 +15,7 @@
 A arquitetura deve permitir adicionar novos **módulos de análise** (fases 2 a 4) sem reescrever o pipeline. Cada módulo é um "checker" plugável que recebe a URL e devolve resultados padronizados.
 
 **Contexto de mercado (out/2026):**
-- Desde 15/09/2026, a Cloudflare bloqueia por padrão crawlers de IA de treino e de agentes em domínios novos e no plano gratuito. Muitos donos de site estão invisíveis para a IA sem saber.
+- Desde 15/09/2026, domínios novos na Cloudflare bloqueiam por padrão crawlers de IA de treino e de agentes nas páginas com anúncios; busca continua liberada, mas crawlers mistos (busca + treino) caem junto (fonte: https://developers.cloudflare.com/changelog/post/2026-07-01-ai-traffic-options/ — o anúncio não fala em plano gratuito). Muitos donos de site estão fechados para a IA sem saber.
 - Uma parte grande dos arquivos /llms.txt publicados é inválida, por exemplo HTML ou redirect para a home.
 
 Esse é o gancho de marketing da Fase 1.

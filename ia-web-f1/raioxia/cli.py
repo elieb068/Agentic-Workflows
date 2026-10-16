@@ -1,4 +1,4 @@
-"""Command line: python -m raioxia analyze <url> | migrate | worker <queue> | purge | stats | email-test <to>"""
+"""Command line: python -m raioxia analyze <url> | migrate | worker <queue> | purge | stats | email-test <to> | indexnow"""
 
 import argparse
 import asyncio
@@ -27,6 +27,8 @@ def build_parser() -> argparse.ArgumentParser:
     stats.add_argument("--days", type=int, default=30)
     email_test = sub.add_parser("email-test", help="send one test e-mail through the configured sender (setup check)")
     email_test.add_argument("to")
+    indexnow = sub.add_parser("indexnow", help="tell Bing & co. which public pages changed today (needs INDEXNOW_KEY)")
+    indexnow.add_argument("--all", action="store_true", help="submit every page in the sitemap")
     return parser
 
 
@@ -45,6 +47,8 @@ def main(argv: list[str] | None = None, fetcher_factory: Callable[[], SafeFetche
         return stats(args.days)
     if args.command == "email-test":
         return email_test(args.to)
+    if args.command == "indexnow":
+        return indexnow(submit_all=args.all)
     checkers = None
     if args.only:
         ids = [i.strip() for i in args.only.split(",") if i.strip()]
@@ -126,3 +130,24 @@ def email_test(to: str) -> int:
         return 1
     print(f"sent: {message_id}")
     return 0
+
+
+def indexnow(submit_all: bool = False) -> int:
+    from raioxia.settings import get_settings
+    from raioxia.web import indexnow as index_now, seo
+
+    settings = get_settings()
+    if not settings.indexnow_key:
+        print("INDEXNOW_KEY not set: nothing sent")
+        return 0
+    paths = list(seo.sitemap_pages()) if submit_all else index_now.changed_paths()
+    if not paths:
+        print("no page changed today: nothing sent")
+        return 0
+    try:
+        status = index_now.submit(settings.base_url, settings.indexnow_key, paths)
+    except Exception as exc:  # network trouble must not fail a deploy
+        print(f"indexnow failed: {exc}", file=sys.stderr)
+        return 1
+    print(f"indexnow: {len(paths)} URL(s), HTTP {status}")
+    return 0 if status in (200, 202) else 1

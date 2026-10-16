@@ -1,0 +1,42 @@
+{% extends "guides/guide_base.html" %}
+{% block body %}
+<p>O <strong>sitemap</strong> é um arquivo com a lista das páginas do seu site, feito para os robôs. Ele não substitui os links entre as páginas, mas ajuda os robôs de busca e de IA a achar tudo o que importa, inclusive páginas novas e páginas que quase não recebem links.</p>
+
+<h2>Como ele é</h2>
+<p>É um arquivo XML, normalmente em <code>seusite.com.br/sitemap.xml</code>:</p>
+<pre tabindex="0">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"&gt;
+  &lt;url&gt;
+    &lt;loc&gt;https://www.seusite.com.br/&lt;/loc&gt;
+    &lt;lastmod&gt;2026-10-01&lt;/lastmod&gt;
+  &lt;/url&gt;
+  &lt;url&gt;
+    &lt;loc&gt;https://www.seusite.com.br/servicos&lt;/loc&gt;
+    &lt;lastmod&gt;2026-09-15&lt;/lastmod&gt;
+  &lt;/url&gt;
+&lt;/urlset&gt;</pre>
+<p>O <code>&lt;lastmod&gt;</code> é a data da última mudança da página. Os robôs usam essa data para decidir o que visitar de novo, então ela precisa ser verdadeira. Sites grandes dividem a lista em vários arquivos, reunidos num índice (<code>sitemap_index.xml</code>). O formato está em <a href="https://www.sitemaps.org/protocol.html">sitemaps.org</a>.</p>
+
+<h2>Como criar</h2>
+<ul>
+  <li><strong>WordPress:</strong> desde a versão 5.5, o WordPress cria o <code>/wp-sitemap.xml</code> sozinho. Plugins como Yoast e Rank Math criam o <code>/sitemap_index.xml</code>.</li>
+  <li><strong>Wix, Shopify, Squarespace:</strong> criam o sitemap automaticamente em <code>/sitemap.xml</code>.</li>
+  <li><strong>Site próprio:</strong> a maioria dos frameworks tem um gerador. Prefira gerar a cada publicação, para a lista nunca ficar desatualizada.</li>
+</ul>
+
+<h2>Declare no robots.txt</h2>
+<p>Os robôs procuram o sitemap no robots.txt. Acrescente esta linha, com o endereço completo:</p>
+<pre tabindex="0">Sitemap: https://www.seusite.com.br/sitemap.xml</pre>
+<p>Ela pode ficar em qualquer lugar do arquivo e vale para todos os robôs. Se o seu sitemap mudou de endereço, atualize a linha: os robôs seguem o endereço declarado, mesmo que ele esteja quebrado.</p>
+
+<h2>Envie para o Google e o Bing</h2>
+<p>No <strong>Google Search Console</strong> e no <strong>Bing Webmaster Tools</strong>, há uma área de "Sitemaps" para enviar o endereço. Assim você vê quantas páginas foram encontradas e se houve erros. O Bing também alimenta assistentes de IA, como o Copilot.</p>
+
+<h2>Erros comuns</h2>
+<ul>
+  <li>O sitemap lista páginas que não existem mais, que redirecionam ou que têm <code>noindex</code>.</li>
+  <li>O robots.txt aponta para um endereço antigo do sitemap.</li>
+  <li>O endereço do sitemap abre uma página do site em vez do XML.</li>
+</ul>
+<p>Mais detalhes no <a href="https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview">guia do Google sobre sitemaps</a>.</p>
+{% endblock %}

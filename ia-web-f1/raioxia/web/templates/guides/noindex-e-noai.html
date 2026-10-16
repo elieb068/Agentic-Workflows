@@ -1,0 +1,46 @@
+{% extends "guides/guide_base.html" %}
+{% block body %}
+<p>Além do robots.txt, cada página pode dar instruções aos robôs por conta própria. Elas ficam escondidas no código ou na resposta do servidor, e uma delas, esquecida, basta para tirar o site do Google e das respostas de IA.</p>
+
+<h2>Onde essas instruções ficam</h2>
+<ul>
+  <li><strong>Na página</strong>, numa tag dentro do <code>&lt;head&gt;</code>:
+    <pre tabindex="0">&lt;meta name="robots" content="noindex, nofollow"&gt;</pre>
+    Ela pode valer para todos (<code>robots</code>) ou só para um robô (<code>googlebot</code>, por exemplo).</li>
+  <li><strong>Na resposta do servidor</strong>, num cabeçalho HTTP que o visitante não vê:
+    <pre tabindex="0">X-Robots-Tag: noindex</pre></li>
+</ul>
+
+<h2>O que cada instrução faz</h2>
+<div tabindex="0" role="region" aria-label="Instruções de indexação e o que fazem" class="overflow-x-auto">
+<table>
+  <thead><tr><th scope="col">Instrução</th><th scope="col">O que pede</th><th scope="col">Efeito</th></tr></thead>
+  <tbody>
+    <tr><td><code>noindex</code></td><td>Não incluir a página nos resultados</td><td>A página some do Google e das buscas por IA</td></tr>
+    <tr><td><code>nofollow</code></td><td>Não seguir os links da página</td><td>Os robôs têm mais dificuldade para achar as outras páginas</td></tr>
+    <tr><td><code>none</code></td><td>O mesmo que <code>noindex, nofollow</code></td><td>Some e não leva a lugar nenhum</td></tr>
+    <tr><td><code>noai</code>, <code>noimageai</code></td><td>Não usar o texto ou as imagens em IA</td><td>Não são oficiais; alguns robôs respeitam, outros ignoram</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Como elas aparecem sem ninguém perceber</h2>
+<ul>
+  <li><strong>WordPress:</strong> a opção "Evitar que mecanismos de busca indexem este site", em Configurações &gt; Leitura, é marcada durante a construção do site e esquecida depois do lançamento.</li>
+  <li><strong>Plugins de SEO</strong> configurados para não indexar a página inicial, as categorias ou o site todo.</li>
+  <li><strong>Site de homologação copiado para produção</strong> com o <code>noindex</code> que protegia a versão de testes.</li>
+  <li><strong>Servidor ou CDN</strong> acrescentando <code>X-Robots-Tag</code> a todas as respostas.</li>
+</ul>
+
+<h2>Como conferir</h2>
+<ol>
+  <li>Abra a sua página inicial, clique com o botão direito e escolha "Exibir código-fonte da página".</li>
+  <li>Procure (Ctrl+F) por <code>robots</code> e veja o que está em <code>content="..."</code>.</li>
+  <li>Para o cabeçalho, abra as ferramentas do desenvolvedor (F12), vá em Rede, recarregue a página, clique na primeira linha e procure <code>x-robots-tag</code>.</li>
+</ol>
+<p>O Raio-X IA faz essas duas verificações na sua página inicial automaticamente.</p>
+
+<h2>Quando manter o noindex</h2>
+<p>Em páginas que não devem aparecer em buscas, ele está certo: área do cliente, carrinho, páginas de obrigado, resultados de busca interna e páginas de teste. O problema é ele estar na página inicial ou nas páginas que apresentam o seu negócio.</p>
+<p>Detalhes no <a href="https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag">guia do Google sobre a tag meta robots</a>.</p>
+{% endblock %}

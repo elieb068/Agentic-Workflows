@@ -2,7 +2,8 @@
 
 Ads are non-personalized unless the visitor accepts personalized ads in the notice on the report.
 static/js/ads-init.js sets the personalization flag (consent kept in localStorage) before the
-loader runs. That page gets its own Content-Security-Policy: a per-response nonce with 'strict-dynamic', so the
+loader runs; on the landing page (lazy) it also loads AdSense on the first interaction, so ads never
+delay the first paint. Pages with ads get their own Content-Security-Policy: a per-response nonce with 'strict-dynamic', so the
 AdSense loader and the scripts it pulls in run, while every other page keeps the strict policy.
 """
 
@@ -28,8 +29,11 @@ ADS_CSP = "; ".join([
 ])
 
 
-def ads_for(settings: Settings) -> dict | None:
-    """Template context for the report's ad slots, or None when AdSense is not configured."""
+def ads_for(settings: Settings, *, lazy: bool = False) -> dict | None:
+    """Template context for the page's ads, or None when AdSense is not configured.
+
+    lazy: load AdSense only after the first scroll, tap or key press (the landing page).
+    """
     if not settings.adsense_client:
         return None
     top, bottom, auto = settings.adsense_slot_top, settings.adsense_slot_bottom, settings.adsense_auto_ads
@@ -38,6 +42,7 @@ def ads_for(settings: Settings) -> dict | None:
         "top": top,
         "bottom": bottom,
         "auto": auto,
+        "lazy": lazy,
         # Ask about personalization only when ads can actually appear (units, or Auto ads).
         "consent": bool(top or bottom or auto),
         "nonce": secrets.token_urlsafe(16),

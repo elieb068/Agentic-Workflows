@@ -1,0 +1,28 @@
+{% extends "guides/guide_base.html" %}
+{% block body %}
+<p>Antes de qualquer coisa, o robô precisa conseguir abrir o seu site e entender do que ele trata. O Raio-X IA confere cinco básicos na página inicial. Nenhum deles é difícil, mas um só que falhe já atrapalha.</p>
+
+<h2>1. HTTPS (o cadeado)</h2>
+<p>O endereço precisa começar com <code>https://</code> e o certificado precisa estar válido. Sem isso, navegadores mostram um aviso de "site não seguro" e muitos robôs desistem. A maioria das hospedagens oferece certificado grátis (Let's Encrypt). Configure também o redirecionamento de <code>http://</code> para <code>https://</code>.</p>
+
+<h2>2. Resposta rápida</h2>
+<p>Robôs têm pouca paciência: se a página demora, eles passam para a próxima. O Raio-X IA avisa quando a página inicial leva mais de 2 segundos para responder. As causas mais comuns são hospedagem lenta, plugins demais e falta de cache. Para medir a experiência completa de quem visita, use o <a href="https://pagespeed.web.dev/">PageSpeed Insights</a>.</p>
+
+<h2>3. Título</h2>
+<p>O título da página (a tag <code>&lt;title&gt;</code>) aparece na aba do navegador e nos resultados de busca. Ele deve dizer o que você faz, não só o nome da empresa:</p>
+<pre tabindex="0">&lt;title&gt;Clínica Sorriso Bom | Dentista em Pinheiros, São Paulo&lt;/title&gt;</pre>
+<p>Algo entre 30 e 60 caracteres funciona bem.</p>
+
+<h2>4. Descrição</h2>
+<p>A descrição (a tag <code>meta description</code>) é o resumo que aparece embaixo do título nas buscas, e que muitos robôs usam para entender a página:</p>
+<pre tabindex="0">&lt;meta name="description" content="Clínica odontológica em Pinheiros com implantes, ortodontia e clareamento. Atendimento de segunda a sábado. Agende pelo WhatsApp."&gt;</pre>
+<p>Use de 70 a 160 caracteres e escreva para uma pessoa, não uma lista de palavras-chave.</p>
+
+<h2>5. Idioma declarado</h2>
+<p>A primeira tag da página deve dizer o idioma do conteúdo:</p>
+<pre tabindex="0">&lt;html lang="pt-BR"&gt;</pre>
+<p>Isso ajuda a IA a responder no idioma certo e a mostrar o seu site para quem pergunta em português. Temas e construtores de site costumam ter essa opção nas configurações de idioma.</p>
+
+<h2>Como conferir</h2>
+<p>Abra o código-fonte da página inicial (botão direito &gt; "Exibir código-fonte da página") e procure <code>&lt;title&gt;</code>, <code>description</code> e <code>lang=</code>. Ou faça um Raio-X: ele confere tudo isso, junto com os outros 7 pontos.</p>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "guides/guide_base.html" %}
+{% block body %}
+<p>Quando alguém pergunta ao ChatGPT, ao Claude, ao Gemini ou ao Perplexity sobre um assunto, a resposta vem do que os robôs dessas empresas conseguiram ler na internet. Cada empresa tem mais de um robô, e cada um tem uma função. Saber quem é quem é o primeiro passo para decidir o que liberar no seu site.</p>
+
+<h2>Os três tipos de robô</h2>
+<ul>
+  <li><strong>Busca e respostas:</strong> indexam o seu site para que ele apareça nas respostas e nos resultados, com link. São os que você quer liberar.</li>
+  <li><strong>A pedido de uma pessoa:</strong> abrem uma página na hora, quando alguém pede ao assistente ("resuma este site"). Como agem a pedido de uma pessoa, a OpenAI e a Perplexity avisam que eles podem não seguir o robots.txt.</li>
+  <li><strong>Treino de modelos:</strong> coletam textos para treinar os próximos modelos de IA. Bloquear é uma escolha legítima e não tira o seu site das respostas.</li>
+</ul>
+
+<h2>A lista</h2>
+<p>Estes são os robôs que o Raio-X IA verifica. Lista revisada em {{ crawlers_reviewed.strftime("%d/%m/%Y") }} com a documentação de cada empresa.</p>
+<div tabindex="0" role="region" aria-label="Robôs de IA verificados" class="overflow-x-auto">
+<table>
+  <thead><tr><th scope="col">Robô (nome no robots.txt)</th><th scope="col">Empresa</th><th scope="col">Função</th></tr></thead>
+  <tbody>
+    {% for c in crawlers %}<tr id="{{ c.token|lower }}"><td><code>{{ c.token }}</code>{% if c.robots_only %}<br><span class="text-sm text-slate-400">só no robots.txt, não visita sites</span>{% endif %}</td><td>{% if c.docs %}<a href="{{ c.docs }}">{{ c.company }}</a>{% else %}{{ c.company }}{% endif %}</td><td>{{ c.label }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="text-[15px] text-slate-400">O link de cada empresa leva à documentação oficial dos robôs dela.</p>
+
+<h2>Por empresa</h2>
+<h3>OpenAI (ChatGPT)</h3>
+<p><code>OAI-SearchBot</code> leva o seu site para a busca do ChatGPT. <code>GPTBot</code> coleta conteúdo para treinar os modelos. <code>ChatGPT-User</code> abre páginas quando um usuário pede. Para aparecer no ChatGPT, o essencial é liberar o OAI-SearchBot.</p>
+<h3>Anthropic (Claude)</h3>
+<p><code>Claude-SearchBot</code> indexa para as respostas com busca do Claude. <code>ClaudeBot</code> coleta conteúdo para treino. <code>Claude-User</code> abre páginas a pedido de um usuário. Os nomes antigos <code>anthropic-ai</code> e <code>Claude-Web</code> não são mais usados: regras com eles não fazem nada.</p>
+<h3>Google (Gemini e Pesquisa)</h3>
+<p>O <code>Googlebot</code> indexa para a Pesquisa Google, inclusive para as respostas geradas por IA dentro dela. O <code>Google-Extended</code> não visita sites: é um nome que o Google lê no robots.txt para decidir se usa o seu conteúdo no treino do Gemini. Segundo o Google, bloqueá-lo não afeta a presença do site na Pesquisa.</p>
+<h3>Perplexity</h3>
+<p><code>PerplexityBot</code> indexa o site para os resultados do Perplexity, e a empresa diz que ele não é usado para treino. <code>Perplexity-User</code> abre páginas a pedido de um usuário e, segundo a própria Perplexity, em geral ignora o robots.txt.</p>
+<h3>Microsoft, Apple e outros</h3>
+<p>O <code>Bingbot</code> indexa para o Bing, que também alimenta o Copilot. O <code>Applebot-Extended</code>, assim como o Google-Extended, só diz à Apple se o conteúdo pode treinar os modelos dela. <code>CCBot</code> (Common Crawl), <code>Meta-ExternalAgent</code> (Meta) e <code>Bytespider</code> (ByteDance) coletam conteúdo para treino.</p>
+
+<h2>Como liberar ou bloquear</h2>
+<p>A regra fica no robots.txt, com o nome do robô na linha <code>User-agent</code>. Exemplos prontos, inclusive "aparecer nas respostas sem treinar modelos", estão no guia <a href="/guias/robots-txt-para-ia">robots.txt para IA</a>. Se o site usa Cloudflare ou outro firewall, confira também o guia <a href="/guias/cloudflare-bloqueando-ia">Cloudflare bloqueando a IA</a>: o bloqueio pode estar lá, e não no robots.txt.</p>
+
+<h2>Como saber se um robô é verdadeiro</h2>
+<p>Qualquer programa pode se apresentar como "GPTBot". Várias empresas, como OpenAI, Google, Microsoft e Perplexity, publicam as faixas de endereço IP dos robôs delas nas páginas de documentação linkadas acima. Firewalls como o da Cloudflare fazem essa conferência automaticamente.</p>
+{% endblock %}

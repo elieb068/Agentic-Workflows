@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+{% block title %}{{ guide.seo_title }} | Raio-X IA{% endblock %}
+{% block description %}{{ guide.description }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block head %}{% for block in jsonld %}<script type="application/ld+json">{{ block|safe }}</script>
+{% endfor %}{% endblock %}
+{% block content %}
+<article class="container-page prose-guide flex max-w-[780px] flex-col gap-4 pt-10 pb-16 text-[17px] leading-[1.75]">
+  <nav aria-label="Você está em" class="text-sm text-slate-400">
+    <ol class="flex flex-wrap gap-x-2">
+      <li><a href="/" class="text-slate-300">Início</a> <span aria-hidden="true">/</span></li>
+      <li><a href="/guias" class="text-slate-300">Guias</a> <span aria-hidden="true">/</span></li>
+      <li aria-current="page" class="text-slate-400">{{ guide.title.split(":")[0] }}</li>
+    </ol>
+  </nav>
+  <header class="mb-2 flex flex-col gap-3">
+    <h1 class="font-display text-[clamp(32px,5vw,44px)] leading-tight font-extrabold text-slate-100">{{ guide.title }}</h1>
+    <p class="text-[19px] text-slate-300">{{ guide.description }}</p>
+    <p class="text-sm text-slate-400">Por {{ company.brand }} · Atualizado em <time datetime="{{ guide.updated.isoformat() }}">{{ guide.updated.strftime("%d/%m/%Y") }}</time> · {{ guide.minutes }} min de leitura</p>
+  </header>
+
+  {% block body %}{% endblock %}
+
+  <aside aria-labelledby="cta-titulo" class="card mt-10 flex flex-col gap-3 border-accent/50 p-7">
+    <h2 id="cta-titulo" class="!mt-0 font-display text-[24px] font-bold text-slate-100">Confira o seu site em 2 minutos</h2>
+    <p>O Raio-X IA verifica {% if guide.check_id %}este e outros 7 pontos{% else %}os 8 pontos{% endif %} e manda a nota de 0 a 100 com o passo a passo para corrigir. Grátis.</p>
+    <a href="/#formulario" class="btn btn-primary mt-1 self-start no-underline">Fazer meu Raio-X grátis {{ icon("arrow", 18) }}</a>
+  </aside>
+
+  <nav aria-labelledby="outros-guias" class="mt-8 flex flex-col gap-3">
+    <h2 id="outros-guias" class="!mt-0 font-display text-xl font-bold text-slate-100">Outros guias</h2>
+    <ul class="!list-none !pl-0 grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
+      {% for g in guides if g.slug != guide.slug %}
+      <li><a href="{{ g.path }}" class="block rounded-xl border border-slate-400/15 bg-brand-800 px-4 py-3 text-[15px] leading-snug">{{ g.title }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+</article>
+{% endblock %}

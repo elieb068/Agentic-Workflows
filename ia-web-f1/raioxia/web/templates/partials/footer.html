@@ -1,11 +1,13 @@
 <footer class="border-t border-slate-400/15">
   <div class="container-page flex flex-wrap items-start justify-between gap-6 py-10 text-sm text-slate-400">
     <div class="flex flex-[1_1_320px] flex-col gap-2.5">
-      <a href="{{ company.website }}" class="self-start"><img src="{{ static_url('img/prime-logo.png') }}" alt="Prime Solutions" width="84" height="26" class="logo-on-dark h-[26px] w-auto"></a>
+      <a href="{{ company.website }}" class="self-start"><img src="{{ static_url('img/prime-logo-60.png') }}" alt="Prime Solutions" width="84" height="26" class="logo-on-dark h-[26px] w-auto"></a>
       <span>{{ company.product }} é um produto da {{ company.brand }}.</span>
       <span>{{ company.legal_name }} · CNPJ {{ company.cnpj }}</span>
     </div>
     <nav aria-label="Rodapé" class="flex flex-wrap gap-x-6 gap-y-3">
+      <a href="/guias" class="text-slate-300 no-underline hover:underline">Guias</a>
+      <a href="/guias/robos-de-ia" class="text-slate-300 no-underline hover:underline">Robôs de IA</a>
       <a href="/privacidade" class="text-slate-300 no-underline hover:underline">Privacidade</a>
       <a href="/termos" class="text-slate-300 no-underline hover:underline">Termos de uso</a>
       <a href="/bot" class="text-slate-300 no-underline hover:underline">Sobre nosso robô</a>

@@ -9,18 +9,23 @@
 <meta name="theme-color" content="#1a2e38">
 <meta property="og:site_name" content="Raio-X IA">
 <meta property="og:locale" content="pt_BR">
-<meta property="og:type" content="website">
+<meta property="og:type" content="{% block og_type %}website{% endblock %}">
 <meta property="og:title" content="{{ self.title() }}">
 <meta property="og:description" content="{{ self.description() }}">
-<meta property="og:image" content="{{ base_url }}{{ static_url('img/icon-192.png') }}">
+{% if not noindex %}<meta property="og:url" content="{{ base_url }}{{ canonical_path }}">
+{% endif %}<meta property="og:image" content="{{ base_url }}{{ static_url('img/og-raiox.png') }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Raio-X IA: seu site aparece no ChatGPT, no Gemini e no Claude? Teste grátis.">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ static_url('img/favicon-32.png') }}">
 <link rel="apple-touch-icon" href="{{ static_url('img/apple-touch-icon.png') }}">
 <link rel="preload" href="/static/fonts/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/static/fonts/outfit-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="{{ static_url('app.css') }}">
-{% if ads %}<script src="{{ static_url('js/ads-init.js') }}"{{ nonce_attr(ads) }}></script>
-<script async src="{{ ads.script }}" crossorigin="anonymous"{{ nonce_attr(ads) }}></script>
-{% endif %}{% block head %}{% endblock %}
+{% if ads and not ads.lazy %}<link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
+<link rel="preconnect" href="https://googleads.g.doubleclick.net">
+{% endif %}<link rel="stylesheet" href="{{ static_url('app.css') }}">
+{% block head %}{% endblock %}
 </head>
 <body>
 <a href="#conteudo" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-brand-800 focus:px-4 focus:py-2">Ir para o conteúdo</a>
@@ -32,6 +37,10 @@
 {% include "partials/footer.html" %}
 </div>
 {% if ads and ads.consent %}{% include "partials/ads_consent.html" %}{% endif %}
-{% block scripts %}{% endblock %}
+{# Ads load after the content: ads-init.js sets the personalization flag first, then the loader runs (on the
+   landing page ads-init.js loads it itself, on the first interaction). #}
+{% if ads %}<script src="{{ static_url('js/ads-init.js') }}"{% if ads.lazy %} data-ads-loader="{{ ads.script }}"{% endif %}{{ nonce_attr(ads) }}></script>
+{% if not ads.lazy %}<script async src="{{ ads.script }}" crossorigin="anonymous"{{ nonce_attr(ads) }}></script>
+{% endif %}{% endif %}{% block scripts %}{% endblock %}
 </body>
 </html>

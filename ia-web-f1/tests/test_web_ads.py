@@ -31,6 +31,8 @@ def test_before_approval_loads_adsense_but_shows_no_units(client, pipeline_env):
     nonce = re.search(r"'nonce-([^']+)'", csp).group(1)
     assert f'src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={CLIENT}" crossorigin="anonymous" nonce="{nonce}"' in html
     assert html.index("js/ads-init.js") < html.index("adsbygoogle.js")  # the flag is set before the loader runs
+    assert html.index("</footer>") < html.index("js/ads-init.js")  # ads load after the content
+    assert '<link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>' in html.split("</head>")[0]
     assert f'js/app.js?v=' in html and f'defer nonce="{nonce}"' in html
     assert "'strict-dynamic'" in csp and "frame-ancestors 'none'" in csp
     assert "<ins" not in html and 'data-ad-slot="report-' not in html  # no empty boxes in production
@@ -88,7 +90,11 @@ def test_auto_ads_put_adsense_and_the_notice_on_the_landing(client, pipeline_env
     html, csp = response.text, response.headers["content-security-policy"]
     nonce = re.search(r"'nonce-([^']+)'", csp).group(1)
     assert "'strict-dynamic'" in csp
-    assert f'adsbygoogle.js?client={CLIENT}" crossorigin="anonymous" nonce="{nonce}"' in html
+    # AdSense loads on the first interaction (ads-init.js injects it), so it never delays the first paint
+    loader = re.escape(f"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={CLIENT}")
+    assert re.search(rf'js/ads-init\.js\?v=[0-9a-f]+" data-ads-loader="{loader}" nonce="{nonce}"', html)
+    assert '<script async src="https://pagead2' not in html and "googlesyndication.com" not in html.split("</head>")[0]
+    assert html.index("</footer>") < html.index("js/ads-init.js")  # after the content, not in <head>
     assert f'turnstile/v0/api.js" async defer nonce="{nonce}"' in html  # Turnstile still runs under the ads CSP
     assert re.search(rf'js/app\.js\?v=[0-9a-f]+" defer nonce="{nonce}"', html)
     assert "<ins" not in html and "data-ads-consent" in html and "data-ads-preferences" in html

@@ -38,7 +38,8 @@ def test_static_files_and_caching(client):
     assert css.status_code == 200 and css.headers["content-type"].startswith("text/css")
     assert css.headers["cache-control"] == "public, max-age=31536000, immutable"
     assert client.get("/static/img/prime-logo.png").headers["cache-control"] == "public, max-age=86400"
-    assert client.get("/static/fonts/inter-latin-wght.woff2").status_code == 200
+    font = client.get("/static/fonts/inter-latin-wght.woff2")  # unhashed URL (preload, @font-face): fonts never change
+    assert font.status_code == 200 and font.headers["cache-control"] == "public, max-age=31536000, immutable"
 
 
 @pytest.mark.db
@@ -64,6 +65,6 @@ def test_not_found_html_for_pages_json_for_api(client):
 def test_layout_has_brand_and_legal_footer(client, pipeline_env, db):
     page = client.get("/nao-existe").text
     assert "Prime Solutions Tecnologia e Serviços de Apoio Administrativo" in page and "43.757.807/0001-86" in page
-    assert static_url("img/prime-logo.png") in page and static_url("app.css") in page
-    for link in ("/privacidade", "/termos", "/bot", "/excluir-dados"):
+    assert static_url("img/prime-logo-60.png") in page and static_url("app.css") in page
+    for link in ("/guias", "/guias/robos-de-ia", "/privacidade", "/termos", "/bot", "/excluir-dados"):
         assert f'href="{link}"' in page

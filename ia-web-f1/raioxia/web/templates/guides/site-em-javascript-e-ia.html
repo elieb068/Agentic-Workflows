@@ -1,0 +1,31 @@
+{% extends "guides/guide_base.html" %}
+{% block body %}
+<p>Muitos sites modernos chegam ao navegador quase vazios: o texto só aparece depois que o JavaScript roda. Para uma pessoa, não faz diferença. Mas a <strong>maioria dos robôs de IA não executa JavaScript</strong>: eles leem o HTML como ele chega do servidor. Se o texto não está lá, para a IA o seu site é uma página em branco.</p>
+
+<h2>Por que isso pesa tanto</h2>
+<p>O Google executa JavaScript, mas faz isso numa segunda etapa, mais lenta (veja o <a href="https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics">guia do Google sobre JavaScript</a>). Os robôs das empresas de IA, em geral, ficam só com o HTML. Por isso esse ponto vale 20 de 100 na nota do Raio-X IA, o segundo maior peso, depois do robots.txt.</p>
+
+<h2>Como saber se o seu site depende de JavaScript</h2>
+<ol>
+  <li>Abra o site, clique com o botão direito e escolha "Exibir código-fonte da página". Isso mostra o HTML que chega do servidor, o mesmo que a IA lê.</li>
+  <li>Procure (Ctrl+F) uma frase que aparece na tela, como o título principal ou a descrição de um serviço.</li>
+  <li>Se a frase não está no código-fonte, e você só encontra algo como <code>&lt;div id="root"&gt;&lt;/div&gt;</code> ou <code>&lt;div id="app"&gt;&lt;/div&gt;</code>, o conteúdo depende de JavaScript.</li>
+</ol>
+<p>O Raio-X IA faz isso de forma automática: compara as palavras do HTML puro com as que aparecem num navegador de verdade e mostra quanto do texto fica invisível para a IA.</p>
+
+<h2>Quem costuma ter esse problema</h2>
+<ul>
+  <li>Sites feitos em <strong>React, Vue ou Angular</strong> "puros" (SPA), sem renderização no servidor.</li>
+  <li>Sites gerados por algumas ferramentas de IA e construtores visuais que entregam um aplicativo JavaScript.</li>
+  <li>Páginas que carregam o texto de uma API depois que abrem, como cardápios, catálogos e listas de imóveis.</li>
+</ul>
+<p>WordPress, Wix, Shopify e a maioria das plataformas tradicionais normalmente já entregam o texto pronto no HTML.</p>
+
+<h2>Como resolver</h2>
+<ul>
+  <li><strong>Renderização no servidor (SSR) ou páginas estáticas (SSG).</strong> O servidor monta a página com o texto antes de enviar. Em Next.js, Nuxt, Astro e SvelteKit, isso é o padrão. Em projetos React ou Vue puros, a migração costuma ser o caminho mais sólido.</li>
+  <li><strong>Pré-renderização.</strong> Um serviço gera versões em HTML das páginas e as entrega aos robôs. É mais rápido de implantar e não exige reescrever o site.</li>
+  <li><strong>Conteúdo essencial no HTML.</strong> No mínimo, coloque no HTML inicial o nome da empresa, o que ela faz, onde atende e como entrar em contato, junto com os <a href="/guias/dados-estruturados-para-ia">dados estruturados</a>.</li>
+</ul>
+<p>Depois de corrigir, repita o teste do código-fonte ou faça um novo Raio-X.</p>
+{% endblock %}

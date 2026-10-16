@@ -11,7 +11,7 @@ from raioxia import privacy
 from raioxia.api.routes import by_report_token
 from raioxia.api.submissions import process_deletion_request, process_submission
 from raioxia.net.fetcher import FetcherSettings
-from raioxia.web import ads, report_view, seo
+from raioxia.web import ads, guides, report_view, seo
 from raioxia.web.assets import static_url
 from raioxia.web.content import CHECKS, FAQ, STEPS
 from raioxia.web.pages import message, page
@@ -22,11 +22,12 @@ EMPTY_FORM = {"url": "", "email": "", "accepted_terms": False, "newsletter": Fal
 
 
 def _landing(request: Request, app: AppDeps, *, status: int = 200, values=None, errors=None, form_error=None):
-    ad_slots = ads.ads_for(app.settings) if app.settings.adsense_auto_ads else None
+    ad_slots = ads.ads_for(app.settings, lazy=True) if app.settings.adsense_auto_ads else None
     response = page(
         request, "landing.html", status=status, nav="landing", canonical_path="/",
         steps=STEPS, checks=CHECKS, faq=FAQ, turnstile_site_key=app.settings.turnstile_site_key,
         jsonld=seo.landing_jsonld(app.settings.base_url, static_url("img/prime-logo.png")),
+        crawlers_reviewed=guides.crawlers_reviewed(),
         values=values or EMPTY_FORM, errors=errors or {}, form_error=form_error, ads=ad_slots,
     )
     if ad_slots:
@@ -109,9 +110,31 @@ def bot_page(request: Request, app: AppDeps = Depends(deps)):
     return page(request, "bot.html", bot_name=user_agent.split(" ", 1)[0], user_agent=user_agent, server_ip=app.settings.server_ip)
 
 
+@router.get("/guias")
+def guides_index(request: Request, app: AppDeps = Depends(deps)):
+    return page(
+        request, "guides/index.html", nav="guides", guides=guides.GUIDES, weights=guides.score_weights(),
+        jsonld=seo.guides_index_jsonld(app.settings.base_url),
+    )
+
+
+@router.get("/guias/{slug}")
+def guide_page(slug: str, request: Request, app: AppDeps = Depends(deps)):
+    guide = guides.by_slug(slug)
+    if guide is None:
+        return message(request, 404, "Guia não encontrado", "Este guia não existe ou mudou de endereço.", link_href="/guias", link_label="Ver todos os guias")
+    extra = {"crawlers": guides.crawler_rows(), "crawlers_reviewed": guides.crawlers_reviewed()} if slug == "robos-de-ia" else {}
+    return page(
+        request, f"guides/{slug}.html", nav="guides", guide=guide, guides=guides.GUIDES,
+        jsonld=seo.guide_jsonld(app.settings.base_url, guide, static_url("img/prime-logo.png"), static_url("img/og-raiox.png")),
+        **extra,
+    )
+
+
 @router.get("/excluir-dados")
 def delete_request_page(request: Request, app: AppDeps = Depends(deps)):
-    return page(request, "delete_request.html", turnstile_site_key=app.settings.turnstile_site_key)
+    # A utility form: out of search results (and of the sitemap), still linked from every footer.
+    return page(request, "delete_request.html", noindex=True, turnstile_site_key=app.settings.turnstile_site_key)
 
 
 @router.post("/excluir-dados")
@@ -128,7 +151,7 @@ def delete_request_form(
                        detail="O link vale por 24 horas. Se não chegar, olhe a caixa de spam.")
     field_error = outcome.message if outcome.field == "email" else None
     return page(
-        request, "delete_request.html", status=outcome.status, turnstile_site_key=app.settings.turnstile_site_key,
+        request, "delete_request.html", status=outcome.status, noindex=True, turnstile_site_key=app.settings.turnstile_site_key,
         email=email, email_error=field_error, form_error=None if field_error else outcome.message,
     )
 
@@ -141,6 +164,14 @@ def robots(app: AppDeps = Depends(deps)):
 @router.get("/sitemap.xml")
 def sitemap(app: AppDeps = Depends(deps)):
     return Response(seo.sitemap_xml(app.settings.base_url), media_type="application/xml", headers={"Cache-Control": "public, max-age=3600"})
+
+
+@router.get("/indexnow.txt")
+def indexnow_key(app: AppDeps = Depends(deps)):
+    """IndexNow key file: proves the URLs we submit (python -m raioxia indexnow) are ours."""
+    if not app.settings.indexnow_key:
+        return PlainTextResponse("Not found", status_code=404)
+    return PlainTextResponse(app.settings.indexnow_key)
 
 
 @router.get("/llms.txt")

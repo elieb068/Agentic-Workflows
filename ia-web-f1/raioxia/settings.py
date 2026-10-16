@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     # and on the report (formats chosen in the AdSense dashboard).
     adsense_auto_ads: bool = False
 
+    # IndexNow (Bing, Yandex, Seznam...): tells search engines which pages changed, right after a deploy.
+    # The key is served at /indexnow.txt. Generate one with: python -c "import secrets; print(secrets.token_hex(16))"
+    indexnow_key: str | None = Field(default=None, pattern=r"^[A-Za-z0-9-]{8,128}$")
+
     # Public IP our fetcher connects from, shown on the /bot page so site owners can recognize it.
     server_ip: str | None = None
 

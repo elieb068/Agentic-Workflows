@@ -1,0 +1,53 @@
+{% extends "guides/guide_base.html" %}
+{% block body %}
+<p>O <strong>llms.txt</strong> é um arquivo de texto simples, na raiz do site (<code>seusite.com.br/llms.txt</code>), que apresenta o seu site aos assistentes de IA: quem você é, o que faz e quais páginas importam. É como um cartão de visitas escrito para a IA, sem menus, banners e código no caminho.</p>
+
+<h2>De onde veio</h2>
+<p>O formato foi proposto em 2024 por Jeremy Howard, da Answer.AI, e está descrito em <a href="https://llmstxt.org/">llmstxt.org</a>. Ele ainda <strong>não é um padrão oficial</strong>, e nem todos os assistentes o leem. Mesmo assim, é barato de fazer, não atrapalha nada e já é usado por empresas de software, documentação técnica e cada vez mais sites comerciais.</p>
+<p>Por isso, no Raio-X IA, ele pesa pouco na nota (10 de 100 pontos). O que mais pesa é não bloquear os robôs e entregar o texto sem depender de JavaScript.</p>
+
+<h2>O formato</h2>
+<p>O arquivo usa Markdown, a mesma marcação simples de muitos editores de texto:</p>
+<ol>
+  <li>Na primeira linha, um título com <code># </code> e o nome da empresa. Só um.</li>
+  <li>Logo abaixo, um resumo com <code>&gt; </code>: uma ou duas frases sobre o que vocês fazem e onde atendem.</li>
+  <li>Se quiser, alguns parágrafos com informações importantes.</li>
+  <li>Seções com <code>## </code>, cada uma com uma lista de links para as suas páginas, no formato <code>- [Nome](endereço): descrição</code>.</li>
+</ol>
+
+<h2>Modelo para copiar</h2>
+<pre tabindex="0"># Padaria Pão Quente
+
+> Padaria artesanal em Curitiba (PR), com pães de fermentação natural, bolos sob encomenda e entrega nos bairros Batel e Água Verde.
+
+Funcionamos de terça a domingo, das 7h às 19h.
+
+## Páginas principais
+
+- [Cardápio](https://www.paoquente.com.br/cardapio): pães, doces e preços
+- [Encomendas](https://www.paoquente.com.br/encomendas): bolos e salgados para festas
+- [Contato](https://www.paoquente.com.br/contato): telefone, WhatsApp e endereço
+
+## Opcional
+
+- [Nossa história](https://www.paoquente.com.br/sobre): desde 1998 no mesmo endereço</pre>
+<p>A seção <code>## Opcional</code> tem um sentido especial no formato: são links que a IA pode pular quando precisa de menos texto.</p>
+
+<h2>Como publicar</h2>
+<ul>
+  <li>O arquivo precisa abrir em <code>https://seusite.com.br/llms.txt</code>, como <strong>texto</strong>, e não como página do site.</li>
+  <li><strong>WordPress:</strong> envie o arquivo para a pasta principal (a mesma do <code>wp-config.php</code>) ou use um plugin de SEO que gere o llms.txt.</li>
+  <li><strong>Outras plataformas:</strong> procure por "arquivos na raiz" ou "llms.txt" nas configurações. Se a plataforma não deixa, peça ao suporte.</li>
+</ul>
+
+<h2>Erros comuns</h2>
+<ul>
+  <li><strong>O endereço abre a página inicial.</strong> Muitos sites redirecionam qualquer endereço desconhecido para a home. Para a IA, é como se o arquivo não existisse.</li>
+  <li><strong>O arquivo vem como HTML.</strong> Acontece quando a plataforma "embrulha" o texto numa página. O servidor precisa enviá-lo como <code>text/plain</code> ou <code>text/markdown</code>.</li>
+  <li><strong>Links quebrados.</strong> Confira cada link depois de publicar. O Raio-X IA testa uma amostra deles.</li>
+  <li><strong>Sem título ou sem resumo.</strong> A primeira linha precisa ser o <code># Nome</code>, e o resumo com <code>&gt;</code> vem logo depois.</li>
+</ul>
+
+<h2>E o llms-full.txt?</h2>
+<p>É uma variação opcional, com o texto completo das páginas importantes num arquivo só. Faz sentido para documentação e bases de conhecimento. Para a maioria dos sites de empresas, o llms.txt basta.</p>
+{% endblock %}

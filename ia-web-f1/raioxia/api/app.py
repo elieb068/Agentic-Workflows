@@ -80,8 +80,10 @@ def create_app(app_deps: AppDeps | None = None) -> FastAPI:
         if path.startswith(_NOINDEX_PREFIXES):
             response.headers.setdefault("X-Robots-Tag", "noindex, nofollow")
         if path.startswith("/static/") and response.status_code == 200:
-            # ?v=<content hash> (static_url) never changes for a given file: cache it for a year.
-            response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if "v" in request.query_params else "public, max-age=86400"
+            # ?v=<content hash> (static_url) never changes for a given file: cache it for a year. Fonts are
+            # referenced without it (preload links, @font-face) and never change: a new font gets a new file name.
+            immutable = "v" in request.query_params or path.startswith("/static/fonts/")
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if immutable else "public, max-age=86400"
         return response
 
     @app.exception_handler(RequestValidationError)

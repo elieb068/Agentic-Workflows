@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 from raioxia.pipeline import CONSENT_TEXT_VERSION
+from raioxia.web import guides
 from raioxia.web.assets import TEMPLATES_DIR, static_url
 
 TIMEZONE = ZoneInfo("America/Sao_Paulo")
@@ -43,3 +44,4 @@ def nonce_attr(ads: dict | None) -> Markup:
 
 
 templates.env.globals["nonce_attr"] = nonce_attr
+templates.env.globals["guide_for"] = guides.for_check  # check id -> its guide (report and landing link to it)

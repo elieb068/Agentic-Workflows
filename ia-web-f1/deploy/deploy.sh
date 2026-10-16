@@ -3,7 +3,7 @@
 #
 #   deploy.sh deploy               git pull, build, migrate, restart, wait until healthy
 #   deploy.sh rollback <commit>    same, at an earlier commit
-#   deploy.sh run <command...>     one-off CLI: purge | stats [--days N] | email-test <to>
+#   deploy.sh run <command...>     one-off CLI: purge | stats [--days N] | email-test <to> | indexnow [--all]
 #   deploy.sh backup               pg_dump to $BASE/backups (keeps the newest 14)
 #   deploy.sh ps | logs [service]
 set -euo pipefail
@@ -36,6 +36,7 @@ release() {
   dc up -d --remove-orphans
   wait_healthy
   echo "deployed $(git -C "$REPO" rev-parse --short HEAD)"
+  dc run --rm cli indexnow || echo "indexnow ping failed (the deploy itself is fine)" >&2
 }
 
 case "${1:-}" in

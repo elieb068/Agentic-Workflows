@@ -1,0 +1,57 @@
+{% extends "guides/guide_base.html" %}
+{% block body %}
+<p>Uma pessoa lê o seu site e entende que ali tem uma clínica, com endereço e telefone. Um robô precisa adivinhar. Os <strong>dados estruturados</strong> acabam com a adivinhação: são um bloco de código que diz, de forma organizada, quem é a empresa, onde fica, como falar com ela e o que vende.</p>
+
+<h2>O formato: JSON-LD com o vocabulário schema.org</h2>
+<p>O jeito recomendado é o <strong>JSON-LD</strong>: um bloco <code>&lt;script type="application/ld+json"&gt;</code> no HTML da página, que o visitante não vê. Os nomes dos campos vêm do <a href="https://schema.org/">schema.org</a>, um vocabulário usado pelo Google, pelo Bing e pelos assistentes de IA. O formato antigo, microdata, também funciona, mas é mais difícil de manter.</p>
+
+<h2>Qual tipo usar</h2>
+<ul>
+  <li><strong>Organization</strong>: para qualquer empresa ou instituição.</li>
+  <li><strong>LocalBusiness</strong> ou um tipo mais específico, como <code>Dentist</code>, <code>Restaurant</code>, <code>LegalService</code> ou <code>HairSalon</code>: para quem atende num endereço.</li>
+  <li><strong>OnlineStore</strong>: para lojas virtuais.</li>
+</ul>
+<p>Tipos como <code>WebSite</code>, <code>WebPage</code> e <code>BreadcrumbList</code> são úteis, mas não dizem quem é a empresa. O Raio-X IA procura um tipo que identifique o negócio.</p>
+
+<h2>Exemplo para copiar</h2>
+<p>Coloque no <code>&lt;head&gt;</code> da página inicial e troque os dados pelos seus:</p>
+<pre tabindex="0">&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "Dentist",
+  "name": "Clínica Sorriso Bom",
+  "url": "https://www.sorrisobom.com.br/",
+  "logo": "https://www.sorrisobom.com.br/logo.png",
+  "telephone": "+55-11-3333-4444",
+  "email": "contato@sorrisobom.com.br",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Rua das Flores, 123",
+    "addressLocality": "São Paulo",
+    "addressRegion": "SP",
+    "postalCode": "01234-000",
+    "addressCountry": "BR"
+  },
+  "openingHours": "Mo-Fr 08:00-18:00",
+  "sameAs": [
+    "https://www.instagram.com/sorrisobom",
+    "https://www.linkedin.com/company/sorrisobom"
+  ]
+}
+&lt;/script&gt;</pre>
+<p>O campo <code>sameAs</code> liga o site aos seus perfis oficiais e ajuda a IA a ter certeza de que todos são da mesma empresa.</p>
+
+<h2>Onde colocar</h2>
+<ul>
+  <li><strong>WordPress:</strong> Yoast, Rank Math e outros plugins de SEO geram os dados de Organization ou LocalBusiness a partir das configurações. Preencha nome, logo, endereço e redes sociais.</li>
+  <li><strong>Outras plataformas:</strong> procure "código no head", "dados estruturados" ou "schema" nas configurações.</li>
+  <li><strong>Site próprio:</strong> peça ao desenvolvedor para gerar o bloco no servidor, para que ele já venha no HTML.</li>
+</ul>
+
+<h2>Como validar</h2>
+<ul>
+  <li><a href="https://validator.schema.org/">Validador do schema.org</a>: mostra o que foi encontrado e os erros de formatação.</li>
+  <li><a href="https://search.google.com/test/rich-results">Teste de pesquisa aprimorada do Google</a>: mostra o que o Google aproveita.</li>
+</ul>
+<p>Um bloco com um erro de formatação, como uma vírgula sobrando, é descartado inteiro pelos robôs. O Raio-X IA avisa quando encontra um.</p>
+{% endblock %}

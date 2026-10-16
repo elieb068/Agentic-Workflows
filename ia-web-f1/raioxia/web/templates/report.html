@@ -42,6 +42,9 @@
       <p class="whitespace-pre-line wrap-anywhere text-[15px] text-slate-200">{{ c.como_corrigir }}</p>
     </div>
     {% endif %}
+    {% set guide = guide_for(c.id) %}{% if guide %}
+    <a href="{{ guide.path }}" class="self-start text-[15px]">Entenda este item: {{ guide.title }}</a>
+    {% endif %}
     {% if c.evidence_json %}
     <details>
       <summary class="min-h-7 text-sm text-slate-400">Ver dados técnicos</summary>

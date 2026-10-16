@@ -1,0 +1,38 @@
+{% extends "guides/guide_base.html" %}
+{% block body %}
+<p>Muitos sites passam pela <strong>Cloudflare</strong>, uma rede que acelera e protege o site contra ataques. Ela também decide quais robôs podem entrar. Se ela barra os robôs de IA, não adianta o robots.txt estar certo: eles param na porta, antes de ler qualquer coisa.</p>
+
+<h2>O que mudou em 15 de setembro de 2026</h2>
+<p>Segundo o <a href="https://developers.cloudflare.com/changelog/post/2026-07-01-ai-traffic-options/">anúncio oficial da Cloudflare</a>, desde 15/09/2026 os domínios novos na Cloudflare começam com estas regras:</p>
+<ul>
+  <li>robôs de <strong>treino</strong> e <strong>agentes</strong> de IA ficam bloqueados nas páginas que mostram anúncios;</li>
+  <li>robôs de <strong>busca</strong> continuam liberados;</li>
+  <li>robôs que fazem busca e treino ao mesmo tempo podem ser barrados junto, porque vale a regra mais restritiva.</li>
+</ul>
+<p>Na prática, um site novo pode estar fechado para parte dos robôs de IA sem que o dono tenha mexido em nada.</p>
+
+<h2>Outras configurações que barram robôs</h2>
+<ul>
+  <li><strong>Bloqueio de robôs de IA</strong> no AI Crawl Control: permite liberar ou bloquear cada robô.</li>
+  <li><strong><a href="https://developers.cloudflare.com/bots/get-started/bot-fight-mode/">Bot Fight Mode</a></strong>: desafia tráfego automatizado em geral e pode atingir robôs legítimos.</li>
+  <li><strong>Regras de firewall (WAF)</strong> criadas por você ou por quem cuida do site, por país, por User-Agent ou por "nível de ameaça".</li>
+  <li><strong><a href="https://developers.cloudflare.com/bots/additional-configurations/managed-robots-txt/">robots.txt gerenciado</a></strong>: a Cloudflare acrescenta regras de bloqueio de IA ao seu robots.txt.</li>
+</ul>
+
+<h2>Como conferir e liberar no painel</h2>
+<ol>
+  <li>Entre no painel da Cloudflare e abra o seu domínio.</li>
+  <li>Vá em <strong>AI Crawl Control</strong> e abra a aba <strong>Crawlers</strong>. Ela lista os robôs de IA que visitaram o site e o que acontece com cada um.</li>
+  <li>Na coluna <strong>Action</strong>, deixe liberados pelo menos os robôs de busca: OAI-SearchBot, Claude-SearchBot e PerplexityBot. Bloquear os de treino (GPTBot, ClaudeBot) é uma escolha sua.</li>
+  <li>Em <strong>Security</strong> &gt; <strong>Bots</strong>, veja se o Bot Fight Mode está ligado e se ele está desafiando robôs que você quer receber.</li>
+  <li>Abra o seu <code>/robots.txt</code> no navegador e confira se a Cloudflare acrescentou bloqueios que você não quer.</li>
+</ol>
+<p>Os nomes dos menus mudam de tempos em tempos. Se não encontrar, a <a href="https://developers.cloudflare.com/ai-crawl-control/">documentação do AI Crawl Control</a> tem o caminho atualizado.</p>
+
+<h2>Como o Raio-X IA testa isso</h2>
+<p>Abrimos a sua página inicial como um navegador comum e depois com a identificação de cada robô de IA, e comparamos as respostas. Se o navegador recebe a página e o robô recebe um bloqueio, um desafio ou uma página muito diferente, avisamos.</p>
+<p>O resultado é <strong>indicativo</strong>: nossas requisições não saem dos endereços oficiais dos robôs, e alguns firewalls tratam o robô verdadeiro de outro jeito. Por isso, a confirmação final é sempre o painel da Cloudflare ou do seu firewall.</p>
+
+<h2>Não usa Cloudflare?</h2>
+<p>Outros serviços fazem o mesmo papel: Akamai, Fastly, Sucuri, Azure Front Door, AWS CloudFront com WAF e plugins de segurança do WordPress, como o Wordfence. Procure nas configurações por "bots", "AI crawlers" ou "bloqueio por User-Agent".</p>
+{% endblock %}

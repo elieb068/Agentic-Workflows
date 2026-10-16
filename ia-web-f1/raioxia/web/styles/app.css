@@ -77,4 +77,15 @@
   .prose-legal p, .prose-legal li { @apply text-slate-300; }
   .prose-legal h2 { @apply mt-8 font-display text-[22px] font-bold text-slate-100; }
   .prose-legal ul { @apply list-disc space-y-1 pl-6; }
+  .prose-guide p, .prose-guide li, .prose-guide td { @apply text-slate-300; }
+  .prose-guide h2 { @apply mt-8 font-display text-[26px] leading-snug font-bold text-slate-100; }
+  .prose-guide h3 { @apply mt-4 font-display text-xl font-semibold text-slate-100; }
+  .prose-guide ul { @apply list-disc space-y-1.5 pl-6; }
+  .prose-guide ol { @apply list-decimal space-y-1.5 pl-6; }
+  .prose-guide strong { @apply text-slate-100; }
+  .prose-guide :not(pre) > code { @apply rounded bg-brand-950 px-1.5 py-0.5 font-mono text-[0.88em] text-accent-lighter; }
+  .prose-guide pre { @apply my-1 overflow-x-auto rounded-xl bg-brand-950 p-4 font-mono text-sm leading-relaxed text-slate-200; }
+  .prose-guide table { @apply w-full border-collapse text-left text-[15px]; }
+  .prose-guide th { @apply border-b border-slate-400/30 py-2 pr-4 align-bottom font-semibold text-slate-100; }
+  .prose-guide td { @apply border-b border-slate-400/15 py-2 pr-4 align-top; }
 }

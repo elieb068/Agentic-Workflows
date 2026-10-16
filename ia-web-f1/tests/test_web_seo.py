@@ -22,9 +22,14 @@ def test_robots_sitemap_llms(client):
     assert f"Sitemap: https://{HOST}/sitemap.xml" in robots.text
     sitemap = client.get("/sitemap.xml")
     assert sitemap.headers["content-type"].startswith("application/xml")
-    assert re.findall(r"<loc>([^<]+)</loc>", sitemap.text) == [f"https://{HOST}{p}" for p in ("/", "/privacidade", "/termos", "/bot", "/excluir-dados")]
+    locs = re.findall(r"<url><loc>([^<]+)</loc><lastmod>(\d{4}-\d{2}-\d{2})</lastmod></url>", sitemap.text)
+    paths = [loc.removeprefix(f"https://{HOST}") for loc, _ in locs]
+    assert paths[:5] == ["/", "/guias", "/privacidade", "/termos", "/bot"] and "/excluir-dados" not in paths
+    assert len(paths) == 5 + 9 and all(p.startswith("/guias/") for p in paths[5:])
+    assert len(locs) == sitemap.text.count("<url>")  # every URL has a <lastmod>
     llms = client.get("/llms.txt").text
-    assert llms.startswith("# Raio-X IA\n\n> ") and "## Páginas" in llms
+    assert llms.startswith("# Raio-X IA\n\n> ") and "## Páginas" in llms and "## Guias" in llms
+    assert f"(https://{HOST}/guias/o-que-e-llms-txt)" in llms
 
 
 def test_landing_jsonld(client):

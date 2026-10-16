@@ -1,15 +1,20 @@
 {% extends "base.html" %}
 {% from "partials/icons.html" import icon %}
-{% block title %}Raio-X IA · Sua porta está aberta para a IA?{% endblock %}
-{% block head %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer{{ nonce_attr(ads) }}></script>
+{% block title %}Seu site aparece no ChatGPT? Teste grátis | Raio-X IA{% endblock %}
+{% block head %}<link rel="preconnect" href="https://challenges.cloudflare.com">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer{{ nonce_attr(ads) }}></script>
 {% for block in jsonld %}<script type="application/ld+json">{{ block|safe }}</script>
 {% endfor %}{% endblock %}
 {% block content %}
 <section class="container-page flex flex-wrap items-start gap-14 pt-12 pb-20 sm:pt-[72px] sm:pb-[88px]">
   <div class="flex min-w-0 flex-[1_1_460px] flex-col gap-6">
     <span class="inline-flex items-center gap-2 self-start rounded-full border border-accent/45 bg-accent/10 px-3.5 py-1.5 text-[13px] font-bold tracking-widest text-accent-light uppercase">{{ icon("eye", 14) }}Visibilidade para IA · grátis</span>
-    <h1 class="font-display text-[clamp(40px,6vw,68px)] leading-[1.04] font-extrabold tracking-tight text-slate-100">Sua porta está <span class="text-gradient">aberta para a IA?</span></h1>
-    <p class="max-w-[560px] text-[19px] text-slate-300">Desde 15 de setembro de 2026, a Cloudflare bloqueia por padrão os robôs de IA em domínios novos e no plano gratuito. Muitos sites ficaram invisíveis para o ChatGPT, o Gemini e o Claude sem que o dono soubesse.</p>
+    <div class="flex flex-col gap-3">
+      <p class="font-display text-[clamp(22px,3vw,30px)] leading-tight font-bold"><span class="text-gradient">Sua porta está aberta para a IA?</span></p>
+      <h1 class="font-display text-[clamp(36px,5.2vw,60px)] leading-[1.06] font-extrabold tracking-tight text-slate-100">Seu site aparece no ChatGPT, no Gemini e no Claude?</h1>
+    </div>
+    <p class="max-w-[560px] text-[19px] text-slate-300">Hoje, mais da metade do tráfego da internet já vem de robôs, e não de pessoas: 51%, segundo o <a href="https://www.imperva.com/resources/resource-library/reports/2025-bad-bot-report/">relatório Bad Bot 2025 da Imperva</a>. Entre eles estão os robôs da IA, que decidem se o seu site aparece nas respostas.</p>
+    <p class="max-w-[560px] text-[17px] text-slate-400">E desde 15 de setembro de 2026, domínios novos na Cloudflare bloqueiam por padrão robôs de treino e agentes de IA nas páginas com anúncios (<a href="https://developers.cloudflare.com/changelog/post/2026-07-01-ai-traffic-options/">anúncio da Cloudflare</a>). Muitos sites ficam fechados para a IA sem que o dono saiba. <a href="/guias/cloudflare-bloqueando-ia">Veja como conferir</a>.</p>
     <p class="max-w-[560px] text-[17px] text-slate-400">Em cerca de 2 minutos, o Raio-X IA verifica 8 pontos do seu site e mostra, em linguagem simples, o que corrigir.</p>
     <ul class="mt-2 flex flex-wrap gap-x-7 gap-y-3 text-[15px] text-slate-300">
       <li class="flex items-center gap-2">{{ icon("check", 18, "text-accent") }}Sem instalar nada</li>
@@ -77,6 +82,7 @@
       <span class="font-mono text-[13px] text-accent-light">{{ "%02d" % loop.index }}</span>
       <h3 class="font-display text-lg leading-snug font-semibold text-slate-100">{{ c.title }}</h3>
       <p class="text-[15px] text-slate-400">{{ c.text }}</p>
+      {% set guide = guide_for(c.id) %}{% if guide %}<a href="{{ guide.path }}" class="mt-auto pt-1 text-[15px]" aria-label="Ler o guia: {{ guide.title }}">Ler o guia</a>{% endif %}
     </li>
     {% endfor %}
   </ul>
@@ -96,6 +102,14 @@
       <p class="mt-3 text-slate-300">{{ q.a }}</p>
     </details>
     {% endfor %}
+  </div>
+</section>
+
+<section id="quem-faz" aria-labelledby="quem-faz-titulo" class="container-page flex scroll-mt-4 flex-col gap-6 pt-20">
+  <div class="flex max-w-[760px] flex-col gap-4">
+    <h2 id="quem-faz-titulo" class="font-display text-4xl font-bold text-slate-100">Quem faz o Raio-X IA</h2>
+    <p class="text-[17px] text-slate-300">O {{ company.product }} é feito pela <a href="{{ company.website }}">{{ company.brand }}</a>, empresa brasileira de tecnologia que trabalha com consultoria em inteligência artificial e automação. Razão social: {{ company.legal_name }}, CNPJ {{ company.cnpj }}.</p>
+    <p class="text-[17px] text-slate-300">A lista de robôs de IA que verificamos é conferida com a documentação oficial de cada empresa (última revisão em {{ crawlers_reviewed.strftime("%d/%m/%Y") }}). Os critérios e o peso de cada ponto na nota estão nos <a href="/guias">guias</a>. Dúvidas ou sugestões: <a href="mailto:{{ company.contact_email }}">{{ company.contact_email }}</a>.</p>
   </div>
 </section>
 
