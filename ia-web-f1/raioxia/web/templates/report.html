@@ -1,9 +1,7 @@
 {% extends "base.html" %}
 {% from "partials/icons.html" import icon %}
 {% block title %}Raio-X IA de {{ r.domain }}{% endblock %}
-{% block head %}{% if r.status in ("processing", "pending_confirmation") %}<noscript><meta http-equiv="refresh" content="10"></noscript>{% endif %}
-{% if ads %}<script src="{{ static_url('js/ads-init.js') }}" nonce="{{ ads.nonce }}"></script>
-<script async src="{{ ads.script }}" crossorigin="anonymous" nonce="{{ ads.nonce }}"></script>{% endif %}{% endblock %}
+{% block head %}{% if r.status in ("processing", "pending_confirmation") %}<noscript><meta http-equiv="refresh" content="10"></noscript>{% endif %}{% endblock %}
 {% block content %}
 {% if r.status == "done" %}
 <div class="container-page flex max-w-[960px] flex-col gap-7 pt-10 pb-[72px] sm:pt-12">
@@ -76,9 +74,8 @@
 
   {% with slot="report-bottom", tall=True %}{% include "partials/ad_slot.html" %}{% endwith %}
 
-  <p class="text-sm text-slate-400">Este relatório é pessoal: o link funciona por 180 dias. Analisamos só a página inicial e os arquivos públicos da raiz; nada foi alterado no seu site.{% if ads and (ads.top or ads.bottom) %} <button type="button" data-ads-preferences class="cursor-pointer text-accent-light underline underline-offset-4 hover:text-accent-lighter">Preferências de anúncios</button>{% endif %}</p>
+  <p class="text-sm text-slate-400">Este relatório é pessoal: o link funciona por 180 dias. Analisamos só a página inicial e os arquivos públicos da raiz; nada foi alterado no seu site.</p>
 </div>
-{% if ads and (ads.top or ads.bottom) %}{% include "partials/ads_consent.html" %}{% endif %}
 
 {% elif r.status in ("processing", "pending_confirmation") %}
 <div class="container-page flex justify-center py-14 sm:py-20">
@@ -118,4 +115,4 @@
 </div>
 {% endif %}
 {% endblock %}
-{% block scripts %}<script src="{{ static_url('js/app.js') }}" defer{% if ads %} nonce="{{ ads.nonce }}"{% endif %}></script>{% endblock %}
+{% block scripts %}<script src="{{ static_url('js/app.js') }}" defer{{ nonce_attr(ads) }}></script>{% endblock %}

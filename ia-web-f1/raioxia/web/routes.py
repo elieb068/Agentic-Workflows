@@ -22,12 +22,16 @@ EMPTY_FORM = {"url": "", "email": "", "accepted_terms": False, "newsletter": Fal
 
 
 def _landing(request: Request, app: AppDeps, *, status: int = 200, values=None, errors=None, form_error=None):
-    return page(
+    ad_slots = ads.ads_for(app.settings) if app.settings.adsense_auto_ads else None
+    response = page(
         request, "landing.html", status=status, nav="landing", canonical_path="/",
         steps=STEPS, checks=CHECKS, faq=FAQ, turnstile_site_key=app.settings.turnstile_site_key,
         jsonld=seo.landing_jsonld(app.settings.base_url, static_url("img/prime-logo.png")),
-        values=values or EMPTY_FORM, errors=errors or {}, form_error=form_error,
+        values=values or EMPTY_FORM, errors=errors or {}, form_error=form_error, ads=ad_slots,
     )
+    if ad_slots:
+        response.headers["Content-Security-Policy"] = ads.csp_for(ad_slots)
+    return response
 
 
 @router.get("/")

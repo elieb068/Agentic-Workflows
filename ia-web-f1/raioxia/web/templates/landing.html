@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "partials/icons.html" import icon %}
 {% block title %}Raio-X IA · Sua porta está aberta para a IA?{% endblock %}
-{% block head %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% block head %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer{{ nonce_attr(ads) }}></script>
 {% for block in jsonld %}<script type="application/ld+json">{{ block|safe }}</script>
 {% endfor %}{% endblock %}
 {% block content %}
@@ -109,4 +109,4 @@
   </div>
 </section>
 {% endblock %}
-{% block scripts %}<script src="{{ static_url('js/app.js') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ static_url('js/app.js') }}" defer{{ nonce_attr(ads) }}></script>{% endblock %}

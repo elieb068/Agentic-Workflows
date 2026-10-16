@@ -1,4 +1,4 @@
-"""Google AdSense on the report page: the only page that loads third-party ads.
+"""Google AdSense: on the finished report (ad units) and, with Auto ads, on the landing page too.
 
 Ads are non-personalized unless the visitor accepts personalized ads in the notice on the report.
 static/js/ads-init.js sets the personalization flag (consent kept in localStorage) before the
@@ -32,10 +32,14 @@ def ads_for(settings: Settings) -> dict | None:
     """Template context for the report's ad slots, or None when AdSense is not configured."""
     if not settings.adsense_client:
         return None
+    top, bottom, auto = settings.adsense_slot_top, settings.adsense_slot_bottom, settings.adsense_auto_ads
     return {
         "client": settings.adsense_client,
-        "top": settings.adsense_slot_top,
-        "bottom": settings.adsense_slot_bottom,
+        "top": top,
+        "bottom": bottom,
+        "auto": auto,
+        # Ask about personalization only when ads can actually appear (units, or Auto ads).
+        "consent": bool(top or bottom or auto),
         "nonce": secrets.token_urlsafe(16),
         "script": f"{ADSENSE_SCRIPT}?client={settings.adsense_client}",
     }

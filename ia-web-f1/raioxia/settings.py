@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     adsense_client: str | None = None  # ca-pub-...
     adsense_slot_top: str | None = None
     adsense_slot_bottom: str | None = None
+    # Auto ads ("generic" code): also load AdSense on the landing page and let Google place ads there
+    # and on the report (formats chosen in the AdSense dashboard).
+    adsense_auto_ads: bool = False
 
     # Public IP our fetcher connects from, shown on the /bot page so site owners can recognize it.
     server_ip: str | None = None

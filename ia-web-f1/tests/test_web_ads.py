@@ -79,3 +79,29 @@ def test_privacy_explains_the_ad_choice(client):
     html = client.get("/privacidade").text
     assert 'id="anuncios"' in html and "anúncios personalizados" in html and "Preferências de anúncios" in html
     assert "só com o seu consentimento (art. 7º, I)" in html
+
+
+def test_auto_ads_put_adsense_and_the_notice_on_the_landing(client, pipeline_env):
+    pipeline_env.settings.adsense_client = CLIENT
+    pipeline_env.settings.adsense_auto_ads = True
+    response = client.get("/")
+    html, csp = response.text, response.headers["content-security-policy"]
+    nonce = re.search(r"'nonce-([^']+)'", csp).group(1)
+    assert "'strict-dynamic'" in csp
+    assert f'adsbygoogle.js?client={CLIENT}" crossorigin="anonymous" nonce="{nonce}"' in html
+    assert f'turnstile/v0/api.js" async defer nonce="{nonce}"' in html  # Turnstile still runs under the ads CSP
+    assert re.search(rf'js/app\.js\?v=[0-9a-f]+" defer nonce="{nonce}"', html)
+    assert "<ins" not in html and "data-ads-consent" in html and "data-ads-preferences" in html
+    # form errors re-render the landing with the same setup
+    refused = client.post("/pedido", data=FORM | {"email": "x"})
+    assert "'strict-dynamic'" in refused.headers["content-security-policy"] and "data-ads-consent" in refused.text
+    # pages without content still never load ads
+    for path in ("/privacidade", "/bot", "/excluir-dados"):
+        assert "adsbygoogle" not in client.get(path).text, path
+
+
+def test_auto_ads_off_keeps_the_landing_strict(client, pipeline_env):
+    pipeline_env.settings.adsense_client = CLIENT
+    response = client.get("/")
+    assert "adsbygoogle" not in response.text and "data-ads-consent" not in response.text
+    assert "'strict-dynamic'" not in response.headers["content-security-policy"]

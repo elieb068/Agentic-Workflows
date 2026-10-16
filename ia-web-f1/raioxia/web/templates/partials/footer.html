@@ -11,6 +11,7 @@
       <a href="/bot" class="text-slate-300 no-underline hover:underline">Sobre nosso robô</a>
       <a href="/excluir-dados" class="text-slate-300 no-underline hover:underline">Excluir meus dados</a>
       <a href="{{ company.website }}" class="text-slate-300 no-underline hover:underline">primesolutions.net.br</a>
+      {% if ads and ads.consent %}<button type="button" data-ads-preferences class="cursor-pointer text-left text-slate-300 hover:underline">Preferências de anúncios</button>{% endif %}
     </nav>
   </div>
 </footer>

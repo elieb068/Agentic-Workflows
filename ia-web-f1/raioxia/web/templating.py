@@ -4,6 +4,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 
 from raioxia.pipeline import CONSENT_TEXT_VERSION
 from raioxia.web.assets import TEMPLATES_DIR, static_url
@@ -34,3 +35,11 @@ templates.env.globals.update(
     consent_version=CONSENT_TEXT_VERSION,
 )
 templates.env.filters["local_datetime"] = local_datetime
+
+
+def nonce_attr(ads: dict | None) -> Markup:
+    """` nonce="..."` for script tags on pages with ads (their CSP trusts only nonced scripts)."""
+    return Markup(f' nonce="{ads["nonce"]}"') if ads else Markup("")
+
+
+templates.env.globals["nonce_attr"] = nonce_attr
