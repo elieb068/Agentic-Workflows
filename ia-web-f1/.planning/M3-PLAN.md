@@ -74,5 +74,5 @@ Deviations and additions:
 - **Shared rules**: form and JSON API use the same submission and deletion logic (`raioxia/api/submissions.py`).
 - `SERVER_IP` setting for `/bot`; `CONSENT_TEXT_VERSION` = 2026-10-15; `tzdata` and `python-multipart` dependencies.
 
-Still to do outside the code: lawyer review of the privacy policy and terms before launch.
+Privacy policy and terms approved for publication by the user on 2026-10-16 (no separate lawyer review); live at /privacidade and /termos, version 2026-10-15.
 
