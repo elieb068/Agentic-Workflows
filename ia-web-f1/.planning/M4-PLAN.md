@@ -1,4 +1,4 @@
-# M4 — Deploy (DRAFT, awaiting approval)
+# M4 — Deploy (approved 2026-10-15; live 2026-10-16)
 
 Goal: Raio-X IA live at `https://raiox.primesolutions.net.br` on the Oracle VPS, next to the production WordPress stack, with workers, database, backups and the daily retention job running, and a real end-to-end request (form -> confirmation e-mail -> report e-mail) passing.
 
@@ -72,16 +72,16 @@ then `caddy validate` + `caddy reload` (no WordPress downtime). Caddy already se
 5. Headers: CSP, HSTS (from Caddy), no-referrer; `/robots.txt`, `/sitemap.xml`, `/llms.txt`.
 6. WordPress still answers 200 throughout.
 
-## Decisions needed
+## Approved choices (2026-10-15)
 
-1. **Turnstile keys**: create a widget in the Cloudflare dashboard (Turnstile -> Add widget, hostname `raiox.primesolutions.net.br`, mode Managed) and send me the site key and secret; the secret goes only into the server's `.env`.
+1. **Turnstile**: widget created for `raiox.primesolutions.net.br`; keys only in the server's `.env` (a fake token is refused live, 403).
 2. **Cloudflare proxy (orange cloud)**: proposal: stay **DNS-only (grey)** for launch (real client IPs, no extra config). If switched to orange later: SSL Full (strict), Caddy `trusted_proxies` for Cloudflare's ranges + `client_ip_headers CF-Connecting-IP` (a global Caddy option that also affects WordPress logs), and **Email Address Obfuscation off** for this host (its injected script is blocked by our CSP).
 3. **Off-site backup** (proposal): local daily dumps now; copying them to TrueNAS can come later.
 4. **Uptime monitor** (proposal): an UptimeRobot HTTP monitor on `https://raiox.primesolutions.net.br/healthz`.
 
 ## Commits
 
-1. [ ] `deploy/Dockerfile`, `deploy/compose.yaml`, `.dockerignore`; image builds and runs the test suite on arm64
-2. [ ] `deploy/deploy.sh`, systemd units (purge, backup), `DEPLOY.md`, `.env` template for production
-3. [ ] Server: checkout, `.env`, build, migrate, start; Caddy switched from placeholder to the app (backup + reload)
+1. [x] `deploy/Dockerfile`, `deploy/compose.yaml`, `.dockerignore`; image builds and runs the test suite on arm64
+2. [x] `deploy/deploy.sh`, systemd units (purge, backup), `DEPLOY.md`, `.env` template for production
+3. [x] Server: checkout, `.env`, build, migrate, start; Caddy switched from placeholder to the app (backup + reload)
 4. [ ] Timers enabled; go-live checks; README/ROADMAP; Phase 1 done criteria
