@@ -1,0 +1,14 @@
+{# Ad personalization choice (LGPD consent). Hidden until app.js finds no saved choice; the choice lives in
+   localStorage (no cookie of ours). Until someone accepts, ads are non-personalized. #}
+<section data-ads-consent hidden aria-labelledby="anuncios-titulo" class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-400/25 bg-brand-950/95 backdrop-blur">
+  <div class="container-page flex flex-wrap items-center justify-between gap-4 py-4">
+    <div class="flex min-w-0 flex-[1_1_420px] flex-col gap-1">
+      <h2 id="anuncios-titulo" class="font-display text-base font-bold text-slate-100">Anúncios no Raio-X IA</h2>
+      <p class="text-sm text-slate-300">O relatório é grátis porque mostra anúncios do Google. Você aceita anúncios personalizados, escolhidos pelo Google com base nos seus interesses? Sem aceite, eles continuam aparecendo, mas não personalizados. <a href="/privacidade#anuncios">Saiba mais</a></p>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <button type="button" data-ads-choice="npa" class="btn btn-ghost min-h-11 px-5 text-sm">Só não personalizados</button>
+      <button type="button" data-ads-choice="personalized" class="btn btn-primary min-h-11 px-5 text-sm">Aceitar personalizados</button>
+    </div>
+  </div>
+</section>

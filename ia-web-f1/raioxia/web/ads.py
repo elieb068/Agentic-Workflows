@@ -1,7 +1,8 @@
 """Google AdSense on the report page: the only page that loads third-party ads.
 
-Ads are non-personalized (requestNonPersonalizedAds, set in static/js/app.js before any request).
-That page gets its own Content-Security-Policy: a per-response nonce with 'strict-dynamic', so the
+Ads are non-personalized unless the visitor accepts personalized ads in the notice on the report.
+static/js/ads-init.js sets the personalization flag (consent kept in localStorage) before the
+loader runs. That page gets its own Content-Security-Policy: a per-response nonce with 'strict-dynamic', so the
 AdSense loader and the scripts it pulls in run, while every other page keeps the strict policy.
 """
 

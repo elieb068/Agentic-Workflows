@@ -30,6 +30,7 @@ def test_before_approval_loads_adsense_but_shows_no_units(client, pipeline_env):
     html, csp = response.text, response.headers["content-security-policy"]
     nonce = re.search(r"'nonce-([^']+)'", csp).group(1)
     assert f'src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={CLIENT}" crossorigin="anonymous" nonce="{nonce}"' in html
+    assert html.index("js/ads-init.js") < html.index("adsbygoogle.js")  # the flag is set before the loader runs
     assert f'js/app.js?v=' in html and f'defer nonce="{nonce}"' in html
     assert "'strict-dynamic'" in csp and "frame-ancestors 'none'" in csp
     assert "<ins" not in html and 'data-ad-slot="report-' not in html  # no empty boxes in production
@@ -60,3 +61,21 @@ def test_robots_lets_the_adsense_crawler_read_reports(client):
     robots = client.get("/robots.txt").text
     assert "User-agent: Mediapartners-Google\nAllow: /" in robots
     assert "User-agent: *\nAllow: /\nDisallow: /r/" in robots
+
+
+def test_personalization_consent_notice_only_with_real_units(client, pipeline_env):
+    pipeline_env.settings.adsense_client = CLIENT
+    location = report_location(client, pipeline_env)
+    assert "data-ads-consent" not in client.get(location).text  # before approval: no ads, nothing to consent to
+
+    pipeline_env.settings.adsense_slot_top = "1111111111"
+    html = client.get(location).text
+    assert '<section data-ads-consent hidden aria-labelledby="anuncios-titulo"' in html  # app.js shows it if no choice yet
+    assert 'data-ads-choice="npa"' in html and 'data-ads-choice="personalized"' in html
+    assert '<button type="button" data-ads-preferences' in html and 'href="/privacidade#anuncios"' in html
+
+
+def test_privacy_explains_the_ad_choice(client):
+    html = client.get("/privacidade").text
+    assert 'id="anuncios"' in html and "anúncios personalizados" in html and "Preferências de anúncios" in html
+    assert "só com o seu consentimento (art. 7º, I)" in html
