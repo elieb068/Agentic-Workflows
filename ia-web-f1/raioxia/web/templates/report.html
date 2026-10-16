@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% from "partials/icons.html" import icon %}
 {% block title %}Raio-X IA de {{ r.domain }}{% endblock %}
-{% block head %}{% if r.status in ("processing", "pending_confirmation") %}<noscript><meta http-equiv="refresh" content="10"></noscript>{% endif %}{% endblock %}
+{% block head %}{% if r.status in ("processing", "pending_confirmation") %}<noscript><meta http-equiv="refresh" content="10"></noscript>{% endif %}
+{% if ads %}<script async src="{{ ads.script }}" crossorigin="anonymous" nonce="{{ ads.nonce }}"></script>{% endif %}{% endblock %}
 {% block content %}
 {% if r.status == "done" %}
 <div class="container-page flex max-w-[960px] flex-col gap-7 pt-10 pb-[72px] sm:pt-12">
@@ -115,4 +116,4 @@
 </div>
 {% endif %}
 {% endblock %}
-{% block scripts %}<script src="{{ static_url('js/app.js') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ static_url('js/app.js') }}" defer{% if ads %} nonce="{{ ads.nonce }}"{% endif %}></script>{% endblock %}

@@ -14,6 +14,14 @@
     });
   });
 
+  // AdSense units on the report: non-personalized only (LGPD; see /privacidade), set before any request.
+  var units = document.querySelectorAll("ins.adsbygoogle");
+  if (units.length) {
+    window.adsbygoogle = window.adsbygoogle || [];
+    window.adsbygoogle.requestNonPersonalizedAds = 1;
+    units.forEach(function () { window.adsbygoogle.push({}); });
+  }
+
   // Report still processing: ask the API every 4 s and reload when the status changes.
   var pending = document.querySelector("[data-poll-report]");
   if (pending && window.fetch) {

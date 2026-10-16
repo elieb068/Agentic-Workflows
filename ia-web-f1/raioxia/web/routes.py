@@ -11,7 +11,7 @@ from raioxia import privacy
 from raioxia.api.routes import by_report_token
 from raioxia.api.submissions import process_deletion_request, process_submission
 from raioxia.net.fetcher import FetcherSettings
-from raioxia.web import report_view, seo
+from raioxia.web import ads, report_view, seo
 from raioxia.web.assets import static_url
 from raioxia.web.content import CHECKS, FAQ, STEPS
 from raioxia.web.pages import message, page
@@ -67,7 +67,13 @@ def report_page(token: str, request: Request, newsletter: str = "", session: Ses
     if analysis is None:
         return message(request, 404, "Relatório não encontrado", "Confira se o endereço do relatório está completo.")
     view = report_view.build(session, analysis, base_url=app.settings.base_url)
-    return page(request, "report.html", noindex=True, nav="report", r=view, checks=CHECKS, newsletter_done=newsletter == "ok")
+    ad_slots = ads.ads_for(app.settings) if view["status"] == "done" else None  # never on pages without content
+    response = page(
+        request, "report.html", noindex=True, nav="report", r=view, checks=CHECKS, newsletter_done=newsletter == "ok", ads=ad_slots,
+    )
+    if ad_slots:
+        response.headers["Content-Security-Policy"] = ads.csp_for(ad_slots)
+    return response
 
 
 @router.post("/r/{token}/newsletter")

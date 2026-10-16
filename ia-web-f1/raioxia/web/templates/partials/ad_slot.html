@@ -1,2 +1,10 @@
-{# Reserved ad space (no ad network yet). The fixed height keeps the layout from jumping when ads arrive. #}
-<aside aria-label="{{ 'Publicidade (fim da página)' if tall else 'Publicidade (topo)' }}" data-ad-slot="{{ slot or 'report-top' }}" class="flex items-center justify-center rounded-xl border border-dashed border-slate-400/40 text-[13px] text-slate-400 {{ 'min-h-[250px]' if tall else 'min-h-[90px]' }}">Publicidade</aside>
+{# Ad space on the report. With AdSense configured: a real unit when its slot ID exists, nothing before
+   approval. Without AdSense (dev): a dashed placeholder. Reserved height keeps the layout from jumping. #}
+{% set label = 'Publicidade (fim da página)' if tall else 'Publicidade (topo)' %}
+{% set height = 'min-h-[250px]' if tall else 'min-h-[90px]' %}
+{% if ads %}
+{% set unit = ads.bottom if tall else ads.top %}
+{% if unit %}<aside aria-label="{{ label }}" class="{{ height }}"><ins class="adsbygoogle block" data-ad-client="{{ ads.client }}" data-ad-slot="{{ unit }}" data-ad-format="auto" data-full-width-responsive="true"></ins></aside>{% endif %}
+{% else %}
+<aside aria-label="{{ label }}" data-ad-slot="{{ slot or 'report-top' }}" class="flex items-center justify-center rounded-xl border border-dashed border-slate-400/40 text-[13px] text-slate-400 {{ height }}">Publicidade</aside>
+{% endif %}

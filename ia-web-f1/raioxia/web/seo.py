@@ -12,6 +12,8 @@ PRIVATE_PREFIXES = ["/r/", "/confirmar/", "/descadastrar/", "/excluir-dados/", "
 def robots_txt(base_url: str) -> str:
     lines = ["# Raio-X IA: AI crawlers and search engines are welcome on the public pages.", "User-agent: *", "Allow: /"]
     lines += [f"Disallow: {prefix}" for prefix in PRIVATE_PREFIXES]  # personal reports and e-mail links
+    # AdSense's crawler reads report pages to match ads (no personal data is shown on them).
+    lines += ["", "User-agent: Mediapartners-Google", "Allow: /"]
     lines += ["", f"Sitemap: {base_url}/sitemap.xml", ""]
     return "\n".join(lines)
 

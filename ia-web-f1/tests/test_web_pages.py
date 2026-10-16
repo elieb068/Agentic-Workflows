@@ -15,7 +15,7 @@ FORM = {"url": "exemplo.com.br", "email": "ana@exemplo.com.br", "accepted_terms"
 @pytest.mark.parametrize(
     ("path", "texts"),
     [
-        ("/privacidade", ["Política de privacidade", "art. 7º, V", "Oracle Cloud", "até 7 dias", "180 dias", "ANPD"]),
+        ("/privacidade", ["Política de privacidade", "art. 7º, V", "Oracle Cloud", "até 7 dias", "180 dias", "ANPD", "Versão de 16 de outubro de 2026", "não são personalizados"]),
         ("/termos", ["Termos de uso", "Código de Defesa do Consumidor", "não é consultoria", "Uso permitido"]),
     ],
 )
@@ -24,7 +24,7 @@ def test_legal_pages(client, path, texts):
     html = response.text
     assert response.status_code == 200
     assert "Prime Solutions Tecnologia e Serviços de Apoio Administrativo, CNPJ 43.757.807/0001-86" in html
-    assert "mailto:raiox@primesolutions.net.br" in html and "Versão de 15 de outubro de 2026" in html
+    assert "mailto:raiox@primesolutions.net.br" in html and "Versão de 1" in html
     assert f'<link rel="canonical" href="https://raiox.primesolutions.net.br{path}">' in html
     for text in texts:
         assert text in html
@@ -32,7 +32,7 @@ def test_legal_pages(client, path, texts):
 
 def test_consents_record_the_published_text_version(client, db):
     client.post("/pedido", data=FORM)
-    assert {c.text_version for c in db.scalars(select(Consent))} == {"2026-10-15"} == {pipeline.CONSENT_TEXT_VERSION}
+    assert {c.text_version for c in db.scalars(select(Consent))} == {"2026-10-16"} == {pipeline.CONSENT_TEXT_VERSION}
 
 
 def test_bot_page(client, pipeline_env):

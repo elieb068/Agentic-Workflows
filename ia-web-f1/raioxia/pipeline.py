@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 CONFIRM_TTL = timedelta(hours=24)
 REUSE_WINDOW = timedelta(hours=24)
 # Version of the consent texts shown on the form (M3 holds the texts; bump both together).
-CONSENT_TEXT_VERSION = "2026-10-15"  # published privacy policy and terms (/privacidade, /termos)
+CONSENT_TEXT_VERSION = "2026-10-16"  # published privacy policy and terms (/privacidade, /termos)
 
 
 class SubmissionError(Exception):

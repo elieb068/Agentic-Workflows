@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     gmail_delegated_user: str = "eric.lieb@primesolutions.net.br"
     gmail_service_account_file: Path | None = None
 
+    # Google AdSense, report page only, non-personalized ads. Without a client the report shows
+    # dashed placeholders (dev); with a client but no slot IDs (before approval) it shows nothing.
+    adsense_client: str | None = None  # ca-pub-...
+    adsense_slot_top: str | None = None
+    adsense_slot_bottom: str | None = None
+
     # Public IP our fetcher connects from, shown on the /bot page so site owners can recognize it.
     server_ip: str | None = None
 
