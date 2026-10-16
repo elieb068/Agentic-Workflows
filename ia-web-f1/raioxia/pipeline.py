@@ -1,4 +1,4 @@
-"""Pipeline domain logic shared by the API and the workers (sync, one Session per call).
+r"""Pipeline domain logic shared by the API and the workers (sync, one Session per call).
 
 Lifecycle of an analysis:
     pending_confirmation --confirm--> queued --job--> running --> done | failed
