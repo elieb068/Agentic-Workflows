@@ -1,0 +1,112 @@
+# Production stack on the Oracle VPS. Run through deploy/deploy.sh, which passes
+#   --env-file $RAIOXIA_ENV_FILE   (interpolation below, e.g. POSTGRES_PASSWORD)
+# The public entry point is the WordPress stack's Caddy (wordpress_caddy), which reaches the API
+# as raioxia-api:8000 over the external network wordpress_default. Nothing here publishes a port.
+
+name: raioxia
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "5"}
+
+x-app: &app
+  image: raioxia-app:latest
+  build:
+    context: ..
+    dockerfile: deploy/Dockerfile
+  env_file: ${RAIOXIA_ENV_FILE:?set RAIOXIA_ENV_FILE}
+  restart: unless-stopped
+  logging: *logging
+  networks: [internal]
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: raioxia
+      POSTGRES_DB: raioxia
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the env file}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raioxia -d raioxia"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    logging: *logging
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]  # queued jobs survive restarts
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    logging: *logging
+    networks: [internal]
+
+  migrate:
+    <<: *app
+    command: ["python", "-m", "raioxia", "migrate"]
+    restart: "no"
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  api:
+    <<: *app
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      internal: {}
+      web:
+        aliases: [raioxia-api]
+
+  worker-analysis:
+    <<: *app
+    command: ["python", "-m", "raioxia", "worker", "analysis"]
+    init: true
+    shm_size: 1gb  # Chromium
+    mem_limit: 2g
+    depends_on:
+      redis: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+
+  worker-email:
+    <<: *app
+    command: ["python", "-m", "raioxia", "worker", "email"]
+    volumes:
+      - ${RAIOXIA_SECRETS_DIR:?set RAIOXIA_SECRETS_DIR}/gmail-service-account.json:/run/secrets/gmail-service-account.json:ro
+    depends_on:
+      redis: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+
+  # One-off commands: deploy/deploy.sh run purge | stats | email-test <to>
+  cli:
+    <<: *app
+    restart: "no"
+    profiles: [tools]
+    entrypoint: ["python", "-m", "raioxia"]
+    volumes:
+      - ${RAIOXIA_SECRETS_DIR:?set RAIOXIA_SECRETS_DIR}/gmail-service-account.json:/run/secrets/gmail-service-account.json:ro
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  internal: {}
+  web:
+    external: true
+    name: wordpress_default

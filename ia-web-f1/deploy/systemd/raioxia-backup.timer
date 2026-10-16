@@ -1,0 +1,9 @@
+[Unit]
+Description=Back up the Raio-X IA database every day at 03:00 (Brasília)
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 America/Sao_Paulo
+Persistent=true
+
+[Install]
+WantedBy=timers.target

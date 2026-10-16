@@ -1,0 +1,13 @@
+.venv/
+.tools/
+.env
+.env.*
+!.env.example
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.vscode/
+.planning/
