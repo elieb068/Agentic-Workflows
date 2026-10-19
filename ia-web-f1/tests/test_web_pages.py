@@ -32,7 +32,7 @@ def test_legal_pages(client, path, texts):
 
 def test_consents_record_the_published_text_version(client, db):
     client.post("/pedido", data=FORM)
-    assert {c.text_version for c in db.scalars(select(Consent))} == {"2026-10-16"} == {pipeline.CONSENT_TEXT_VERSION}
+    assert {c.text_version for c in db.scalars(select(Consent))} == {"2026-10-19"} == {pipeline.CONSENT_TEXT_VERSION}
 
 
 def test_bot_page(client, pipeline_env):

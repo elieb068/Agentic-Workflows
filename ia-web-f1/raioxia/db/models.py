@@ -1,7 +1,7 @@
 """Database schema (PostgreSQL). Migrations live in raioxia/migrations (Alembic).
 
-Personal data: leads.email, consents.ip/user_agent, analyses.requested_ip and
-email_outbox.to_address. Deleting a lead cascades to its consents and outbox rows;
+Personal data: leads.email, consents.ip/user_agent, analyses.requested_ip,
+email_outbox.to_address and brevo_removals.email (kept only until Brevo deletes the contact). Deleting a lead cascades to its consents and outbox rows;
 analyses survive with lead_id NULL (anonymized stats) unless deleted explicitly.
 """
 
@@ -60,6 +60,7 @@ class Lead(Base):
     confirmed_at: Mapped[datetime | None]  # first confirmed e-mail
     newsletter: Mapped[bool] = mapped_column(server_default=text("false"))  # current state; history in consents
     unsubscribed_at: Mapped[datetime | None]  # no e-mail at all after this, except deletion confirmations
+    brevo_synced: Mapped[bool] = mapped_column(server_default=text("false"))  # contact is in the Brevo newsletter list
 
     consents: Mapped[list["Consent"]] = relationship(back_populates="lead", cascade="all, delete-orphan", passive_deletes=True)
 
@@ -162,3 +163,13 @@ class EmailOutbox(Base):
     last_error: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     sent_at: Mapped[datetime | None]
+
+
+class BrevoRemoval(Base):
+    """E-mail of a deleted lead that is still a Brevo contact: removed there by the next sync, then this row goes."""
+
+    __tablename__ = "brevo_removals"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    email: Mapped[str] = mapped_column(String(320))
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())

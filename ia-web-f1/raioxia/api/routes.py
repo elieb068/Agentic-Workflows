@@ -1,14 +1,15 @@
 """JSON API, the e-mail link endpoints (confirm, unsubscribe, deletion) and health. HTML pages: raioxia.web."""
 
+import hmac
 import logging
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Body, Depends, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from raioxia import pipeline, privacy
+from raioxia import newsletter, pipeline, privacy, stats
 from raioxia.api.deps import AppDeps, db_session, deps, request_ip
 from raioxia.db import Analysis
 from raioxia.api.submissions import ACCEPTED_MESSAGE, DELETION_ACCEPTED_MESSAGE, process_deletion_request, process_submission
@@ -58,6 +59,8 @@ def confirm(token: str, request: Request, session: Session = Depends(db_session)
     if result is Confirmation.QUEUED:
         enqueue_analysis(app.queues[ANALYSIS_QUEUE], analysis.id)
     dispatch(app.queues[EMAIL_QUEUE], email_ids)
+    if result in (Confirmation.QUEUED, Confirmation.REUSED) and analysis.newsletter_opt_in:
+        newsletter.dispatch_sync(app.queues[EMAIL_QUEUE], app.settings)
 
     if result is Confirmation.INVALID:
         return message(request, 404, "Link inválido", "Esse link de confirmação não existe. Confira se copiou o endereço inteiro.")
@@ -147,6 +150,7 @@ def unsubscribe(token: str, request: Request, session: Session = Depends(db_sess
         return message(request, 404, "Link inválido", "Esse link de descadastro não é válido.")
     privacy.unsubscribe(session, lead_id, ip=request_ip(request), user_agent=request.headers.get("user-agent", "")[:512] or None, now=app.clock())
     session.commit()
+    newsletter.dispatch_sync(app.queues[EMAIL_QUEUE], app.settings)
     return message(request, 200, "Pronto", "Você não vai mais receber e-mails do Raio-X IA. Se pedir um novo relatório, enviaremos só o que for necessário para ele.", tone="success")
 
 
@@ -181,4 +185,49 @@ def delete_data(token: str, request: Request, session: Session = Depends(db_sess
         return message(request, 404, "Link inválido ou vencido", "Peça a exclusão de novo para receber um link novo.", link_href="/excluir-dados", link_label="Pedir a exclusão de novo")
     privacy.delete_lead_data(session, lead_id)
     session.commit()
+    newsletter.dispatch_sync(app.queues[EMAIL_QUEUE], app.settings)
     return message(request, 200, "Dados excluídos", "Apagamos os dados ligados a este e-mail no Raio-X IA.", tone="success")
+
+
+# --- Newsletter (Brevo + the n8n workflow) ---------------------------------------------------------------
+
+def _secret_matches(given: str, expected: SecretStr | None) -> bool:
+    return expected is not None and hmac.compare_digest(given.encode(), expected.get_secret_value().encode())
+
+
+@router.post("/webhooks/brevo/{secret}")
+def brevo_webhook(
+    secret: str, payload: dict | list = Body(...), session: Session = Depends(db_session), app: AppDeps = Depends(deps),
+):
+    """Unsubscribes, hard bounces and spam complaints from Brevo: recorded in Raio-X like any other unsubscribe."""
+    if not _secret_matches(secret, app.settings.brevo_webhook_secret):
+        return _error(404, "not_found", "Not found.")
+    events = payload if isinstance(payload, list) else [payload]
+    stopped = 0
+    for event in events[:500]:
+        if not isinstance(event, dict):
+            continue
+        name = str(event.get("event", "")).strip().lower()
+        email = str(event.get("email", "")).strip().lower()
+        if name not in newsletter.STOP_EVENTS or not email:
+            continue
+        lead = privacy.find_lead(session, email)
+        if lead is None or lead.unsubscribed_at is not None:
+            continue
+        privacy.unsubscribe(session, lead.id, ip=None, user_agent=f"brevo webhook: {name}", now=app.clock())
+        stopped += 1
+    session.commit()
+    if stopped:
+        newsletter.dispatch_sync(app.queues[EMAIL_QUEUE], app.settings)
+    return {"ok": True, "unsubscribed": stopped}
+
+
+@router.get("/api/newsletter/stats")
+def newsletter_stats(
+    request: Request, days: int = Query(7, ge=1, le=90), session: Session = Depends(db_session), app: AppDeps = Depends(deps),
+):
+    """Anonymous aggregate of recent analyses for the weekly edition. Bearer NEWSLETTER_STATS_TOKEN."""
+    scheme, _, token = request.headers.get("authorization", "").partition(" ")
+    if scheme.lower() != "bearer" or not _secret_matches(token, app.settings.newsletter_stats_token):
+        return _error(401, "unauthorized", "Missing or invalid token.")
+    return stats.findings(session, now=app.clock(), days=days)

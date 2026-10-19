@@ -12,11 +12,11 @@ from raioxia.web.templating import COMPANY
 PUBLIC_PAGES = {
     "/": date(2026, 10, 16),
     "/guias": date(2026, 10, 16),
-    "/privacidade": date(2026, 10, 16),
+    "/privacidade": date(2026, 10, 19),
     "/termos": date(2026, 10, 16),
     "/bot": date(2026, 10, 15),
 }
-PRIVATE_PREFIXES = ["/r/", "/confirmar/", "/descadastrar/", "/excluir-dados/", "/api/"]
+PRIVATE_PREFIXES = ["/r/", "/confirmar/", "/descadastrar/", "/excluir-dados/", "/api/", "/webhooks/"]
 
 
 def robots_txt(base_url: str) -> str:

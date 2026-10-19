@@ -18,7 +18,8 @@ TURNSTILE_TEST_SECRET_KEY = "1x0000000000000000000000000000000AA"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # env_ignore_empty: "BREVO_LIST_ID=" (as in env.production.example) means unset, not an invalid value.
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore", env_ignore_empty=True)
 
     app_base_url: str = "http://localhost:8000"
     # Signs unsubscribe/deletion links. Required: generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
@@ -52,6 +53,15 @@ class Settings(BaseSettings):
     # and on the report (formats chosen in the AdSense dashboard).
     adsense_auto_ads: bool = False
 
+    # Newsletter via Brevo (raioxia/newsletter): Raio-X keeps consent; Brevo only holds the subscribed contacts.
+    # Without an API key nothing is sent to Brevo. The webhook secret is the last part of the URL Brevo calls
+    # (/webhooks/brevo/<secret>) when someone unsubscribes there; the stats token guards /api/newsletter/stats
+    # (read by the n8n workflow that drafts each edition).
+    brevo_api_key: SecretStr | None = None
+    brevo_list_id: int | None = None
+    brevo_webhook_secret: SecretStr | None = Field(default=None, min_length=24)
+    newsletter_stats_token: SecretStr | None = Field(default=None, min_length=24)
+
     # IndexNow (Bing, Yandex, Seznam...): tells search engines which pages changed, right after a deploy.
     # The key is served at /indexnow.txt. Generate one with: python -c "import secrets; print(secrets.token_hex(16))"
     indexnow_key: str | None = Field(default=None, pattern=r"^[A-Za-z0-9-]{8,128}$")
@@ -66,6 +76,8 @@ class Settings(BaseSettings):
     def _gmail_needs_key(self) -> Self:
         if self.email_sender == "gmail" and self.gmail_service_account_file is None:
             raise ValueError("EMAIL_SENDER=gmail needs GMAIL_SERVICE_ACCOUNT_FILE")
+        if self.brevo_api_key is not None and self.brevo_list_id is None:
+            raise ValueError("BREVO_API_KEY needs BREVO_LIST_ID (the newsletter list)")
         return self
 
     @property

@@ -7,13 +7,14 @@ from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from raioxia.api.deps import AppDeps, db_session, deps, request_ip
-from raioxia import privacy
+from raioxia import newsletter, privacy
 from raioxia.api.routes import by_report_token
 from raioxia.api.submissions import process_deletion_request, process_submission
 from raioxia.net.fetcher import FetcherSettings
 from raioxia.web import ads, guides, report_view, seo
 from raioxia.web.assets import static_url
 from raioxia.web.content import CHECKS, FAQ, STEPS
+from raioxia.queues import EMAIL_QUEUE
 from raioxia.web.pages import message, page
 
 router = APIRouter()
@@ -91,6 +92,7 @@ def report_newsletter(token: str, request: Request, session: Session = Depends(d
         session, analysis.lead, ip=request_ip(request), user_agent=request.headers.get("user-agent", "")[:512] or None, now=app.clock()
     )
     session.commit()
+    newsletter.dispatch_sync(app.queues[EMAIL_QUEUE], app.settings)
     return RedirectResponse(f"/r/{token}?newsletter=ok", status_code=303)
 
 

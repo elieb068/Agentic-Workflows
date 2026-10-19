@@ -23,7 +23,7 @@ from raioxia.web.routes import router as web_router
 log = logging.getLogger(__name__)
 
 # Paths that carry tokens or are private: keep them out of search engines.
-_NOINDEX_PREFIXES = ("/r/", "/confirmar/", "/api/", "/descadastrar/", "/excluir-dados/")
+_NOINDEX_PREFIXES = ("/r/", "/confirmar/", "/api/", "/descadastrar/", "/excluir-dados/", "/webhooks/")
 # Only our own files plus Cloudflare Turnstile (script + its iframe). No inline scripts or styles.
 CSP = "; ".join([
     "default-src 'self'",

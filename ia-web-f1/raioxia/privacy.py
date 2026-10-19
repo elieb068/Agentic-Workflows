@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import delete, exists, select, update
 from sqlalchemy.orm import Session
 
-from raioxia import pipeline
+from raioxia import newsletter, pipeline
 from raioxia.db import Analysis, Consent, EmailOutbox, Lead
 from raioxia.tokens import new_token
 
@@ -55,6 +55,7 @@ def delete_lead_data(session: Session, lead_id: int) -> bool:
     lead = session.get(Lead, lead_id)
     if lead is None:
         return False
+    newsletter.forget(session, lead)  # its Brevo contact goes too (next sync)
     session.execute(delete(Analysis).where(Analysis.lead_id == lead_id))
     session.delete(lead)
     session.flush()
@@ -88,7 +89,8 @@ def purge(session: Session, *, now: datetime) -> dict[str, int]:
 
     recent = exists().where(Analysis.lead_id == Lead.id)
     counts["inactive_leads_deleted"] = session.execute(
-        delete(Lead).where(Lead.newsletter.is_(False), Lead.created_at < report_cutoff, ~recent)
+        # brevo_synced: a contact still in Brevo is removed by the sync first; the lead goes on a later purge
+        delete(Lead).where(Lead.newsletter.is_(False), Lead.brevo_synced.is_(False), Lead.created_at < report_cutoff, ~recent)
     ).rowcount
     counts["outbox_rows_deleted"] = session.execute(
         delete(EmailOutbox).where(EmailOutbox.status != "queued", EmailOutbox.created_at < report_cutoff)

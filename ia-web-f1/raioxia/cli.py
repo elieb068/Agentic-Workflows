@@ -82,7 +82,7 @@ def purge() -> int:
     import json
     from datetime import UTC, datetime
 
-    from raioxia import privacy
+    from raioxia import newsletter, privacy
     from raioxia.db.engine import session_scope
     from raioxia.email.outbox import requeue_stale
     from raioxia.queues import EMAIL_QUEUE, get_queue
@@ -92,6 +92,10 @@ def purge() -> int:
         counts = privacy.purge(session, now=now)
     with session_scope() as session:
         counts["emails_requeued"] = requeue_stale(session, get_queue(EMAIL_QUEUE), now=now)
+    try:
+        counts["brevo"] = newsletter.sync_job()  # safety net for missed or failed sync jobs
+    except newsletter.BrevoError as exc:
+        counts["brevo"] = str(exc)
     print(json.dumps(counts))
     return 0
 
