@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Raio-X IA Semanal: o que mudou nas IAs e no seu site | Raio-X IA{% endblock %}
+{% block description %}Arquivo da newsletter Raio-X IA Semanal: toda semana, o que mudou nas IAs (ChatGPT, Gemini, Claude, Perplexity) e como isso afeta a visibilidade do seu site.{% endblock %}
+{% block content %}
+<div class="container-page flex max-w-[860px] flex-col gap-10 pt-12 pb-20">
+  <header class="flex flex-col gap-3">
+    <h1 class="font-display text-[clamp(34px,5vw,48px)] leading-tight font-extrabold text-slate-100">{{ newsletter.name }}</h1>
+    <p class="text-[19px] text-slate-300">{{ newsletter.promise[:1]|upper }}{{ newsletter.promise[1:] }}. Um e-mail por semana, em português, sem enrolação. Aqui ficam as edições já enviadas.</p>
+    <p class="text-slate-300">Para receber por e-mail, marque a newsletter ao <a href="/#formulario">pedir o seu Raio-X</a>.</p>
+  </header>
+
+  {% if issues %}
+  <ol class="flex flex-col gap-4">
+    {% for i in issues %}
+    <li class="flex flex-col gap-2 rounded-2xl border border-slate-400/15 bg-brand-800 p-[22px]">
+      <span class="text-sm text-slate-400">Edição {{ i.edition }} · <time datetime="{{ i.publish_at.isoformat() }}">{{ i.publish_at|local_datetime("%d/%m/%Y") }}</time></span>
+      <h2 class="font-display text-xl leading-snug font-semibold"><a href="/newsletter/{{ i.edition }}" class="text-slate-100">{{ i.subject }}</a></h2>
+      {% if i.preheader %}<p class="text-[15px] text-slate-400">{{ i.preheader }}</p>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="rounded-2xl border border-slate-400/15 bg-brand-800 p-[22px] text-slate-300">A primeira edição ainda não saiu. Enquanto isso, veja os <a href="/guias">guias para deixar o seu site visível para a IA</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

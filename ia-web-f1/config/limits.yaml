@@ -10,3 +10,10 @@ email:
   - {window: 86400, max: 2}
 domain:
   - {window: 86400, max: 10}
+
+# Free robots.txt AI tester (/ferramentas/robots-txt-ia): no e-mail, instant result.
+tool_ip:
+  - {window: 3600, max: 20}
+  - {window: 86400, max: 60}
+tool_domain:
+  - {window: 3600, max: 10}

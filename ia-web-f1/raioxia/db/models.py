@@ -173,3 +173,20 @@ class BrevoRemoval(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     email: Mapped[str] = mapped_column(String(320))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class NewsletterIssue(Base):
+    """A sent edition of the weekly newsletter, shown in the public archive (/newsletter) from publish_at on.
+
+    Published by the n8n workflow when an edition is approved; holds only the edition's text (no subscriber data).
+    """
+
+    __tablename__ = "newsletter_issues"
+
+    edition: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    subject: Mapped[str] = mapped_column(String(200))
+    preheader: Mapped[str] = mapped_column(String(300), server_default="")
+    content: Mapped[dict[str, Any]] = mapped_column()  # intro, main_story, number_of_week, tip, other_news
+    publish_at: Mapped[datetime] = mapped_column(index=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())

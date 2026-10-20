@@ -11,13 +11,14 @@ from sqlalchemy.orm import Session
 
 from raioxia import newsletter, pipeline, privacy, stats
 from raioxia.api.deps import AppDeps, db_session, deps, request_ip
-from raioxia.db import Analysis
+from raioxia.db import Analysis, NewsletterIssue
 from raioxia.api.submissions import ACCEPTED_MESSAGE, DELETION_ACCEPTED_MESSAGE, process_deletion_request, process_submission
 from raioxia.email.outbox import dispatch, queue_report_email
 from raioxia.jobs import enqueue_analysis
 from raioxia.pipeline import Confirmation
 from raioxia.queues import ANALYSIS_QUEUE, EMAIL_QUEUE
 from raioxia.tokens import verify
+from raioxia.web import archive
 from raioxia.web.pages import action, message
 
 log = logging.getLogger(__name__)
@@ -227,7 +228,38 @@ def newsletter_stats(
     request: Request, days: int = Query(7, ge=1, le=90), session: Session = Depends(db_session), app: AppDeps = Depends(deps),
 ):
     """Anonymous aggregate of recent analyses for the weekly edition. Bearer NEWSLETTER_STATS_TOKEN."""
-    scheme, _, token = request.headers.get("authorization", "").partition(" ")
-    if scheme.lower() != "bearer" or not _secret_matches(token, app.settings.newsletter_stats_token):
+    if not _newsletter_authorized(request, app):
         return _error(401, "unauthorized", "Missing or invalid token.")
     return stats.findings(session, now=app.clock(), days=days)
+
+
+def _newsletter_authorized(request: Request, app: AppDeps) -> bool:
+    scheme, _, token = request.headers.get("authorization", "").partition(" ")
+    return scheme.lower() == "bearer" and _secret_matches(token, app.settings.newsletter_stats_token)
+
+
+@router.put("/api/newsletter/issues/{edition}")
+def publish_issue(
+    edition: int, issue: archive.IssueIn, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps),
+):
+    """Archive an approved edition (n8n). Visible at /newsletter/<edition> from publish_at on. Idempotent."""
+    if not _newsletter_authorized(request, app):
+        return _error(401, "unauthorized", "Missing or invalid token.")
+    if not 1 <= edition <= 100_000:
+        return _error(422, "invalid_edition", "Edition must be a positive number.")
+    row = archive.upsert(session, edition, issue)
+    session.commit()
+    log.info("newsletter issue archived", extra={"edition": edition})
+    return {"ok": True, "edition": row.edition, "url": f"{app.settings.base_url}/newsletter/{row.edition}", "publish_at": row.publish_at.isoformat()}
+
+
+@router.delete("/api/newsletter/issues/{edition}")
+def unpublish_issue(edition: int, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
+    """Remove an edition from the archive (e.g. its Brevo send was cancelled)."""
+    if not _newsletter_authorized(request, app):
+        return _error(401, "unauthorized", "Missing or invalid token.")
+    row = session.get(NewsletterIssue, edition)
+    if row is not None:
+        session.delete(row)
+        session.commit()
+    return {"ok": True, "deleted": row is not None}

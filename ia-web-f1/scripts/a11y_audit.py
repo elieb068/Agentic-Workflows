@@ -36,7 +36,7 @@ def main() -> int:
     parser.add_argument("token", nargs="?", help="a report token from the dev database, to audit /r/<token>")
     parser.add_argument("--base", default="http://127.0.0.1:8000")
     args = parser.parse_args()
-    paths = ["/", "/guias", *(g.path for g in GUIDES), "/privacidade", "/termos", "/bot", "/excluir-dados", "/nao-existe"]
+    paths = ["/", "/guias", *(g.path for g in GUIDES), "/ferramentas/robots-txt-ia", "/newsletter", "/privacidade", "/termos", "/bot", "/excluir-dados", "/nao-existe"]
     paths += [f"/r/{args.token}"] if args.token else []
     failures = 0
     with sync_playwright() as p:

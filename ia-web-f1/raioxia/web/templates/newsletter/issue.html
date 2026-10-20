@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+{% block title %}{{ issue.subject }} | Raio-X IA Semanal{% endblock %}
+{% block description %}{{ issue.preheader or issue.subject }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block head %}{% for block in jsonld %}<script type="application/ld+json">{{ block|safe }}</script>
+{% endfor %}{% endblock %}
+{% block content %}
+<article class="container-page prose-guide flex max-w-[780px] flex-col gap-4 pt-10 pb-16 text-[17px] leading-[1.75]">
+  <nav aria-label="Você está em" class="text-sm text-slate-400">
+    <ol class="!list-none !pl-0 !space-y-0 flex flex-wrap gap-x-2">
+      <li><a href="/" class="text-slate-300">Início</a> <span aria-hidden="true">/</span></li>
+      <li><a href="/newsletter" class="text-slate-300">Newsletter</a> <span aria-hidden="true">/</span></li>
+      <li aria-current="page" class="text-slate-400">Edição {{ issue.edition }}</li>
+    </ol>
+  </nav>
+  <header class="mb-2 flex flex-col gap-3">
+    <p class="text-sm font-bold tracking-widest text-accent-light uppercase">{{ newsletter.name }} · edição {{ issue.edition }}</p>
+    <h1 class="font-display text-[clamp(30px,4.6vw,42px)] leading-tight font-extrabold text-slate-100">{{ issue.subject }}</h1>
+    <p class="text-sm text-slate-400">Enviada em <time datetime="{{ issue.publish_at.isoformat() }}">{{ issue.publish_at|local_datetime("%d/%m/%Y") }}</time></p>
+  </header>
+
+  <p class="text-[19px] text-slate-200">{{ c.intro }}</p>
+
+  <h2>{{ c.main_story.title }}</h2>
+  {% for paragraph in c.main_story.paragraphs %}<p>{{ paragraph }}</p>{% endfor %}
+  <p class="text-[15px] text-slate-400">Fonte: <a href="{{ c.main_story.source_url }}" rel="noopener">{{ c.main_story.source_name }}</a></p>
+
+  {% if c.number_of_week %}
+  <aside aria-label="Número da semana" class="my-4 flex flex-col gap-1 rounded-2xl border border-accent/40 bg-accent/10 p-6">
+    <span class="text-sm font-bold tracking-widest text-accent-light uppercase">Número da semana</span>
+    <span class="font-display text-4xl font-extrabold text-slate-100">{{ c.number_of_week.value }}</span>
+    <strong>{{ c.number_of_week.label }}</strong>
+    <p class="!mt-1 text-[15px]">{{ c.number_of_week.explanation }}</p>
+    <p class="text-sm text-slate-400">Dados agregados e anônimos dos sites analisados pelo Raio-X IA.</p>
+  </aside>
+  {% endif %}
+
+  <h2>Dica da semana: {{ c.tip.title }}</h2>
+  <p>{{ c.tip.body }}</p>
+  <p><a href="{{ c.tip.guide_url }}">Leia o guia: {{ c.tip.guide_title }}</a></p>
+
+  {% if c.other_news %}
+  <h2>Também nesta semana</h2>
+  {% for n in c.other_news %}<p><strong>{{ n.title }}.</strong> {{ n.summary }} <a href="{{ n.source_url }}" rel="noopener">Fonte</a></p>{% endfor %}
+  {% endif %}
+
+  <aside aria-labelledby="assine" class="card mt-10 flex flex-col gap-3 border-accent/50 p-7">
+    <h2 id="assine" class="!mt-0 font-display text-[24px] font-bold text-slate-100">Receba a próxima edição por e-mail</h2>
+    <p>Faça o Raio-X do seu site e marque a newsletter no formulário. É grátis, e você sai quando quiser.</p>
+    <a href="/#formulario" class="btn btn-primary mt-1 self-start no-underline">Fazer meu Raio-X grátis {{ icon("arrow", 18) }}</a>
+  </aside>
+  <p class="mt-4"><a href="/newsletter">Ver todas as edições</a></p>
+</article>
+{% endblock %}

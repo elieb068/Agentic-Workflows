@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+{% block title %}Teste de robots.txt para IA: GPTBot, ClaudeBot e outros | Raio-X IA{% endblock %}
+{% block description %}Grátis e na hora: veja quais robôs de IA (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot e outros) o robots.txt do seu site libera ou bloqueia. Sem cadastro.{% endblock %}
+{% block head %}<link rel="preconnect" href="https://challenges.cloudflare.com">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% for block in jsonld %}<script type="application/ld+json">{{ block|safe }}</script>
+{% endfor %}{% endblock %}
+{% block content %}
+<div class="container-page flex max-w-[860px] flex-col gap-8 pt-12 pb-20">
+  <header class="flex flex-col gap-3">
+    <p class="text-sm font-bold tracking-widest text-accent-light uppercase">Ferramenta grátis · sem cadastro</p>
+    <h1 class="font-display text-[clamp(32px,5vw,46px)] leading-tight font-extrabold text-slate-100">Teste de robots.txt para IA</h1>
+    <p class="text-[19px] text-slate-300">Digite o endereço de um site e veja, na hora, quais robôs de IA o robots.txt dele libera ou bloqueia: os da busca do ChatGPT, do Claude, do Perplexity, do Google e os de treino de modelos.</p>
+  </header>
+
+  <form id="teste" action="/ferramentas/robots-txt-ia#resultado" method="post" novalidate data-submit-once class="card flex flex-col gap-4 p-6 sm:p-8">
+    {% if error %}<div role="alert" class="rounded-xl border border-red-400/45 bg-red-400/10 px-3.5 py-3 text-sm text-red-200">{{ error }}</div>{% endif %}
+    <div class="flex flex-col gap-1.5">
+      <label for="url" class="text-sm font-semibold text-slate-200">Endereço do site</label>
+      <input id="url" name="url" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" required maxlength="2048" placeholder="seusite.com.br" value="{{ url }}" class="field-input">
+    </div>
+    <div class="cf-turnstile min-h-[65px]" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" data-language="pt-br" data-size="flexible"></div>
+    <button type="submit" class="btn btn-primary min-h-[52px] font-display text-lg">Testar o robots.txt {{ icon("arrow", 20) }}</button>
+    <p class="text-[13px] text-slate-400">Lemos só a página inicial e o arquivo /robots.txt do site, uma vez. Não guardamos o endereço testado.</p>
+  </form>
+
+  {% if result %}
+  <section id="resultado" aria-labelledby="resultado-titulo" class="prose-guide flex scroll-mt-6 flex-col gap-4 text-[17px] leading-[1.7]">
+    <h2 id="resultado-titulo" class="!mt-0">Resultado para {{ result.host }}</h2>
+    <p class="text-[15px] text-slate-400">robots.txt: <a href="{{ result.robots_url }}" rel="noopener nofollow" class="wrap-anywhere">{{ result.robots_url }}</a> ({{ result.state }}).</p>
+    <p class="text-[19px] text-slate-100"><strong>{{ result.search_open }} de {{ result.search_total }}</strong> robôs de busca e de respostas estão liberados.</p>
+    <p class="whitespace-pre-line wrap-anywhere">{{ result.explicacao }}</p>
+    {% if result.como_corrigir %}
+    <div class="rounded-xl bg-brand-900 px-[18px] py-4">
+      <strong class="text-sm tracking-wider text-accent-light uppercase">Como corrigir</strong>
+      <p class="!mt-1.5 whitespace-pre-line wrap-anywhere text-[15px] text-slate-200">{{ result.como_corrigir }}</p>
+    </div>
+    {% endif %}
+
+    {% for g in result.groups %}
+    <h3>{{ g.title }}</h3>
+    <p class="!mt-0 text-[15px] text-slate-400">{{ g.note }}</p>
+    <div tabindex="0" role="region" aria-label="Robôs: {{ g.title }}" class="overflow-x-auto">
+      <table>
+        <thead><tr><th scope="col">Robô</th><th scope="col">Empresa</th><th scope="col">Situação</th></tr></thead>
+        <tbody>
+          {% for r in g.rows %}<tr><td><code>{{ r.token }}</code></td><td>{{ r.company }}</td><td><span class="font-semibold {{ 'text-green-300' if r.tone == 'ok' else 'text-amber-300' if r.tone == 'aviso' else 'text-red-300' }}">{{ r.label }}</span>{% if r.rule %}<br><span class="font-mono text-[13px] text-slate-400">{{ r.rule }}</span>{% endif %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endfor %}
+
+    <p class="text-[15px] text-slate-400">O robots.txt é só uma parte. A Cloudflare e outros firewalls podem barrar os robôs antes de eles lerem o arquivo. Veja <a href="/guias/cloudflare-bloqueando-ia">como conferir</a>.</p>
+  </section>
+  {% endif %}
+
+  <aside aria-labelledby="completo" class="card flex flex-col gap-3 border-accent/50 p-7">
+    <h2 id="completo" class="font-display text-[24px] font-bold text-slate-100">Quer o Raio-X completo?</h2>
+    <p class="text-slate-300">O relatório grátis confere 8 pontos, inclusive bloqueio na Cloudflare, llms.txt, JavaScript e dados estruturados, com nota de 0 a 100 e o passo a passo para corrigir.</p>
+    <a href="/#formulario" class="btn btn-primary mt-1 self-start no-underline">Fazer meu Raio-X grátis {{ icon("arrow", 18) }}</a>
+  </aside>
+
+  <section class="prose-guide flex flex-col gap-3 text-[17px] leading-[1.7]">
+    <h2 class="!mt-0">Como ler o resultado</h2>
+    <ul>
+      <li><strong>Liberado:</strong> o robô pode ler o site inteiro.</li>
+      <li><strong>Só a página inicial:</strong> as páginas internas estão bloqueadas para esse robô.</li>
+      <li><strong>Bloqueado:</strong> o robô não pode ler o site.</li>
+    </ul>
+    <p>Quais robôs liberar, quais você pode bloquear e exemplos prontos estão no guia <a href="/guias/robots-txt-para-ia">robots.txt para IA</a>. A lista completa dos robôs está em <a href="/guias/robos-de-ia">Robôs de IA: quem são e o que cada um faz</a>.</p>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ static_url('js/app.js') }}" defer></script>{% endblock %}

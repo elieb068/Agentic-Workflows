@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
@@ -11,11 +12,13 @@ from raioxia import newsletter, privacy
 from raioxia.api.routes import by_report_token
 from raioxia.api.submissions import process_deletion_request, process_submission
 from raioxia.net.fetcher import FetcherSettings
-from raioxia.web import ads, guides, report_view, seo
+from raioxia.runner import AnalysisError, normalize_url
+from raioxia.web import ads, archive, guides, report_view, seo, tools
 from raioxia.web.assets import static_url
 from raioxia.web.content import CHECKS, FAQ, STEPS
 from raioxia.queues import EMAIL_QUEUE
 from raioxia.web.pages import message, page
+from raioxia.web.templating import TIMEZONE
 
 router = APIRouter()
 
@@ -164,8 +167,9 @@ def robots(app: AppDeps = Depends(deps)):
 
 
 @router.get("/sitemap.xml")
-def sitemap(app: AppDeps = Depends(deps)):
-    return Response(seo.sitemap_xml(app.settings.base_url), media_type="application/xml", headers={"Cache-Control": "public, max-age=3600"})
+def sitemap(session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
+    issues = {f"/newsletter/{i.edition}": i.publish_at.astimezone(TIMEZONE).date() for i in archive.published(session, app.clock())}
+    return Response(seo.sitemap_xml(app.settings.base_url, issues), media_type="application/xml", headers={"Cache-Control": "public, max-age=3600"})
 
 
 @router.get("/indexnow.txt")
@@ -177,5 +181,66 @@ def indexnow_key(app: AppDeps = Depends(deps)):
 
 
 @router.get("/llms.txt")
-def llms(app: AppDeps = Depends(deps)):
-    return PlainTextResponse(seo.llms_txt(app.settings.base_url), headers={"Cache-Control": "public, max-age=3600"})
+def llms(session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
+    issues = [(f"/newsletter/{i.edition}", i.subject) for i in archive.published(session, app.clock())]
+    return PlainTextResponse(seo.llms_txt(app.settings.base_url, issues), headers={"Cache-Control": "public, max-age=3600"})
+
+
+# --- Newsletter archive -----------------------------------------------------------------------------
+
+@router.get("/newsletter")
+def newsletter_index(request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
+    return page(request, "newsletter/index.html", nav="guides", issues=archive.published(session, app.clock()))
+
+
+@router.get("/newsletter/{edition}")
+def newsletter_issue(edition: int, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
+    issue = archive.get_published(session, edition, app.clock())
+    if issue is None:
+        return message(request, 404, "Edição não encontrada", "Esta edição não existe ou ainda não foi publicada.", link_href="/newsletter", link_label="Ver todas as edições")
+    jsonld = seo.issue_jsonld(app.settings.base_url, issue, static_url("img/prime-logo.png"), static_url("img/og-raiox.png"))
+    return page(request, "newsletter/issue.html", nav="guides", issue=issue, c=issue.content, jsonld=jsonld)
+
+
+# --- Free tools --------------------------------------------------------------------------------------
+
+ROBOTS_TOOL = "tools/robots_ai.html"
+
+
+def _robots_tool(request: Request, app: AppDeps, *, status: int = 200, **context):
+    return page(
+        request, ROBOTS_TOOL, status=status, nav="guides", turnstile_site_key=app.settings.turnstile_site_key,
+        jsonld=seo.robots_tool_jsonld(app.settings.base_url), **context,
+    )
+
+
+@router.get("/ferramentas/robots-txt-ia")
+def robots_tool_page(request: Request, app: AppDeps = Depends(deps)):
+    return _robots_tool(request, app, url="")
+
+
+@router.post("/ferramentas/robots-txt-ia")
+async def robots_tool_run(
+    request: Request,
+    url: Annotated[str, Form(max_length=2048)] = "",
+    turnstile_token: Annotated[str, Form(alias="cf-turnstile-response", max_length=4096)] = "",
+    app: AppDeps = Depends(deps),
+):
+    ip = request_ip(request)
+    now = app.clock()
+    if not await run_in_threadpool(app.turnstile, turnstile_token, ip):
+        return _robots_tool(request, app, status=403, url=url, error="Não conseguimos confirmar que você não é um robô. Recarregue a página e tente de novo.")
+    if not app.limiter.hit("tool_ip", ip or "unknown", now):
+        return _robots_tool(request, app, status=429, url=url, error="Muitos testes seguidos. Espere alguns minutos e tente de novo.")
+    try:
+        target = normalize_url(url)
+    except AnalysisError as exc:
+        return _robots_tool(request, app, status=422, url=url, error=exc.message)
+    host = target.url.split("://", 1)[1].split("/", 1)[0]
+    if not app.limiter.hit("tool_domain", host, now):
+        return _robots_tool(request, app, status=429, url=url, error="Esse site foi testado muitas vezes na última hora. Tente mais tarde.")
+    try:
+        result = await tools.robots_ai_report(url)
+    except tools.ToolError as exc:
+        return _robots_tool(request, app, status=422, url=url, error=exc.message)
+    return _robots_tool(request, app, url=url, result=result, noindex=True)

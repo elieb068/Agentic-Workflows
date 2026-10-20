@@ -12,9 +12,11 @@ from raioxia.web.templating import COMPANY
 PUBLIC_PAGES = {
     "/": date(2026, 10, 16),
     "/guias": date(2026, 10, 16),
-    "/privacidade": date(2026, 10, 19),
+    "/privacidade": date(2026, 10, 20),
     "/termos": date(2026, 10, 16),
-    "/bot": date(2026, 10, 15),
+    "/bot": date(2026, 10, 20),
+    "/ferramentas/robots-txt-ia": date(2026, 10, 20),
+    "/newsletter": date(2026, 10, 20),
 }
 PRIVATE_PREFIXES = ["/r/", "/confirmar/", "/descadastrar/", "/excluir-dados/", "/api/", "/webhooks/"]
 
@@ -28,19 +30,23 @@ def robots_txt(base_url: str) -> str:
     return "\n".join(lines)
 
 
-def sitemap_pages() -> dict[str, date]:
-    return PUBLIC_PAGES | {g.path: g.updated for g in GUIDES}
+def sitemap_pages(issues: dict[str, date] | None = None) -> dict[str, date]:
+    """Static pages and guides, plus published newsletter editions (path -> date) when given."""
+    return PUBLIC_PAGES | {g.path: g.updated for g in GUIDES} | (issues or {})
 
 
-def sitemap_xml(base_url: str) -> str:
+def sitemap_xml(base_url: str, issues: dict[str, date] | None = None) -> str:
     urls = "".join(
-        f"<url><loc>{base_url}{path}</loc><lastmod>{updated.isoformat()}</lastmod></url>" for path, updated in sitemap_pages().items()
+        f"<url><loc>{base_url}{path}</loc><lastmod>{updated.isoformat()}</lastmod></url>"
+        for path, updated in sitemap_pages(issues).items()
     )
     return f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n'
 
 
-def llms_txt(base_url: str) -> str:
+def llms_txt(base_url: str, issues: list[tuple[str, str]] | None = None) -> str:
+    """issues: published newsletter editions as (path, subject), newest first."""
     guides = "\n".join(f"- [{g.title}]({base_url}{g.path}): {g.summary}" for g in GUIDES)
+    editions = "".join(f"\n- [{subject}]({base_url}{path})" for path, subject in (issues or [])[:10])
     return f"""# Raio-X IA
 
 > Ferramenta gratuita, em português, que verifica se um site está aberto para os robôs de inteligência artificial (ChatGPT, Gemini, Claude, Perplexity): robots.txt, bloqueio no firewall ou CDN, llms.txt, instruções de indexação, dependência de JavaScript, dados estruturados, sitemap e básicos. Dá uma nota de 0 a 100 e explica como corrigir cada item. Produto da {COMPANY["brand"]}.
@@ -56,6 +62,14 @@ def llms_txt(base_url: str) -> str:
 
 - [Todos os guias]({base_url}/guias): como deixar um site visível para a IA, e como a nota é calculada
 {guides}
+
+## Ferramentas
+
+- [Teste de robots.txt para IA]({base_url}/ferramentas/robots-txt-ia): mostra na hora quais robôs de IA o robots.txt de um site libera ou bloqueia
+
+## Newsletter
+
+- [Raio-X IA Semanal]({base_url}/newsletter): o que mudou nas IAs e como isso afeta o seu site, toda semana (arquivo das edições){editions}
 
 ## Contato
 
@@ -145,3 +159,42 @@ def guide_jsonld(base_url: str, guide: Guide, logo_url: str, image_url: str) -> 
     }
     trail = [("Início", "/"), ("Guias", "/guias"), (guide.title.split(":")[0], guide.path)]
     return [_script_safe(b) for b in (article, _breadcrumbs(base_url, trail))]
+
+
+def issue_jsonld(base_url: str, issue, logo_url: str, image_url: str) -> list[str]:
+    """A newsletter edition (raioxia.db.NewsletterIssue) as an Article."""
+    path = f"/newsletter/{issue.edition}"
+    article = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": issue.subject,
+        "description": issue.preheader or issue.subject,
+        "url": f"{base_url}{path}",
+        "mainEntityOfPage": f"{base_url}{path}",
+        "inLanguage": "pt-BR",
+        "datePublished": issue.publish_at.isoformat(),
+        "dateModified": issue.publish_at.isoformat(),
+        "image": f"{base_url}{image_url}",
+        "author": _publisher(base_url, logo_url),
+        "publisher": _publisher(base_url, logo_url),
+        "isPartOf": {"@type": "Periodical", "name": "Raio-X IA Semanal", "url": f"{base_url}/newsletter"},
+    }
+    trail = [("Início", "/"), ("Newsletter", "/newsletter"), (f"Edição {issue.edition}", path)]
+    return [_script_safe(b) for b in (article, _breadcrumbs(base_url, trail))]
+
+
+def robots_tool_jsonld(base_url: str) -> list[str]:
+    app = {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Teste de robots.txt para IA",
+        "url": f"{base_url}/ferramentas/robots-txt-ia",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "pt-BR",
+        "description": "Mostra na hora quais robôs de IA (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot e outros) o robots.txt de um site libera ou bloqueia.",
+        "offers": {"@type": "Offer", "price": "0", "priceCurrency": "BRL"},
+        "publisher": {"@type": "Organization", "name": COMPANY["brand"], "url": COMPANY["website"]},
+    }
+    trail = [("Início", "/"), ("Teste de robots.txt para IA", "/ferramentas/robots-txt-ia")]
+    return [_script_safe(b) for b in (app, _breadcrumbs(base_url, trail))]

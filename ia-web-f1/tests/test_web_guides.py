@@ -93,7 +93,8 @@ def test_indexnow_key_file_and_submission(client, pipeline_env, monkeypatch):
     pipeline_env.settings.indexnow_key = "a1b2c3d4e5f60718"
     assert client.get("/indexnow.txt").text == "a1b2c3d4e5f60718"
 
-    assert indexnow.changed_paths(date(2026, 10, 16)) == list(seo.sitemap_pages())[:4] + [g.path for g in guides.GUIDES]
+    assert indexnow.changed_paths(date(2026, 10, 20)) == ["/privacidade", "/bot", "/ferramentas/robots-txt-ia", "/newsletter"]
+    assert indexnow.changed_paths(date(2026, 10, 16)) == list(seo.sitemap_pages())
     assert indexnow.changed_paths(date(2099, 1, 1)) == []
     sent = []
 

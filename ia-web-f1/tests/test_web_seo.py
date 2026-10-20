@@ -1,5 +1,6 @@
 """Our own site must pass our own checks: the analyzer runs against the app in-process (no network)."""
 
+import asyncio
 import json
 import re
 
@@ -24,8 +25,9 @@ def test_robots_sitemap_llms(client):
     assert sitemap.headers["content-type"].startswith("application/xml")
     locs = re.findall(r"<url><loc>([^<]+)</loc><lastmod>(\d{4}-\d{2}-\d{2})</lastmod></url>", sitemap.text)
     paths = [loc.removeprefix(f"https://{HOST}") for loc, _ in locs]
-    assert paths[:5] == ["/", "/guias", "/privacidade", "/termos", "/bot"] and "/excluir-dados" not in paths
-    assert len(paths) == 5 + 9 and all(p.startswith("/guias/") for p in paths[5:])
+    assert paths[:7] == ["/", "/guias", "/privacidade", "/termos", "/bot", "/ferramentas/robots-txt-ia", "/newsletter"]
+    assert "/excluir-dados" not in paths
+    assert len(paths) == 7 + 9 and all(p.startswith("/guias/") for p in paths[7:])  # no edition published in tests
     assert len(locs) == sitemap.text.count("<url>")  # every URL has a <lastmod>
     llms = client.get("/llms.txt").text
     assert llms.startswith("# Raio-X IA\n\n> ") and "## Páginas" in llms and "## Guias" in llms
@@ -40,12 +42,25 @@ def test_landing_jsonld(client):
     assert len(blocks[2]["mainEntity"]) == 5
 
 
+class SerialASGITransport(httpx.ASGITransport):
+    """One request at a time. In tests every DB session shares one connection (savepoints); the checkers fetch
+    /sitemap.xml and /llms.txt concurrently, and both open a session. Production gives each request its own connection."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._lock = asyncio.Lock()
+
+    async def handle_async_request(self, request):
+        async with self._lock:
+            return await super().handle_async_request(request)
+
+
 async def _analyze_ourselves(client, render: bool):
     resolver = FakeResolver()
     resolver.set(HOST, ["93.184.215.10"])
     # llms.txt links to the company site; in production it's live, here it is answered in-process too.
     resolver.set("www.primesolutions.net.br", ["93.184.215.11"])
-    fetcher = SafeFetcher(FetcherSettings(), resolver=resolver, transport=httpx.ASGITransport(app=client.app))
+    fetcher = SafeFetcher(FetcherSettings(), resolver=resolver, transport=SerialASGITransport(app=client.app))
     try:
         return await analyze(f"https://{HOST}/", fetcher=fetcher, render=render)
     finally:

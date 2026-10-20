@@ -21,6 +21,9 @@ class Limits(BaseModel):
     ip: list[Window]
     email: list[Window]
     domain: list[Window]
+    # Free instant tools (no e-mail): looser per-IP limit, plus a per-site cap so nobody hammers one site through us.
+    tool_ip: list[Window] = Field(default_factory=lambda: [Window(window=3600, max=20), Window(window=86400, max=60)])
+    tool_domain: list[Window] = Field(default_factory=lambda: [Window(window=3600, max=10)])
 
 
 def load_limits(config_dir: Path | None = None) -> Limits:
