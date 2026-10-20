@@ -34,6 +34,7 @@ def issue(publish_at, **content):
 def test_publishing_needs_the_token_and_valid_links(client, pipeline_env, clock):
     body = issue(clock() - timedelta(hours=1))
     assert client.put("/api/newsletter/issues/1", json=body).status_code == 401
+    assert client.put("/api/newsletter/issues/1", json={}).status_code == 401  # auth before validation
     pipeline_env.settings.newsletter_stats_token = SecretStr(TOKEN)
     assert client.put("/api/newsletter/issues/1", json=body, headers={"Authorization": "Bearer nope"}).status_code == 401
     bad = issue(clock(), tip=CONTENT["tip"] | {"guide_url": "javascript:alert(1)"})

@@ -5,7 +5,7 @@ import logging
 
 from fastapi import APIRouter, Body, Depends, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field, SecretStr, ValidationError
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
@@ -240,13 +240,17 @@ def _newsletter_authorized(request: Request, app: AppDeps) -> bool:
 
 @router.put("/api/newsletter/issues/{edition}")
 def publish_issue(
-    edition: int, issue: archive.IssueIn, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps),
+    edition: int, request: Request, payload: dict = Body(...), session: Session = Depends(db_session), app: AppDeps = Depends(deps),
 ):
     """Archive an approved edition (n8n). Visible at /newsletter/<edition> from publish_at on. Idempotent."""
-    if not _newsletter_authorized(request, app):
+    if not _newsletter_authorized(request, app):  # before validating: no schema hints for strangers
         return _error(401, "unauthorized", "Missing or invalid token.")
     if not 1 <= edition <= 100_000:
         return _error(422, "invalid_edition", "Edition must be a positive number.")
+    try:
+        issue = archive.IssueIn.model_validate(payload)
+    except ValidationError as exc:
+        return JSONResponse({"error": "invalid_issue", "message": str(exc)[:1000]}, status_code=422)
     row = archive.upsert(session, edition, issue)
     session.commit()
     log.info("newsletter issue archived", extra={"edition": edition})
