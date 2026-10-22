@@ -64,7 +64,21 @@ rx deploy
 
 ## Caddy
 
-The site block lives in `/home/ubuntu/wordpress/Caddyfile` (the WordPress project). It is a single-file bind mount: edit it in place (never replace the file), keep a dated backup next to it, then:
+The site block lives in `/home/ubuntu/wordpress/Caddyfile` (the WordPress project). Current block:
+
+```
+raiox.primesolutions.net.br {
+    # Largest legit body is the newsletter archive PUT (~50 KB); anything bigger is refused with 413.
+    request_body {
+        max_size 1MB
+    }
+    encode zstd gzip
+    header Strict-Transport-Security "max-age=31536000"
+    reverse_proxy raioxia-api:8000
+}
+```
+
+It is a single-file bind mount: edit it in place (never replace the file), keep a dated backup next to it, then:
 
 ```bash
 docker exec wordpress_caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile

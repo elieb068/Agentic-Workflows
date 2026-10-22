@@ -89,6 +89,22 @@ def test_deleting_a_subscriber_removes_the_brevo_contact_and_keeps_nothing(db):
     assert count(db, BrevoRemoval) == 0
 
 
+def test_sync_status_flags_a_backlog_brevo_never_cleared(db):
+    assert newsletter.sync_status(db, now=NOW) == {"pending_removals": 0, "pending_additions": 0, "oldest_pending_hours": None, "stale": False}
+    ana = done(db, "ana@exemplo.com.br", newsletter=True).lead
+    bia = done(db, "bia@exemplo.com.br", "outro.com.br", newsletter=True).lead
+    assert newsletter.sync_status(db, now=NOW)["pending_additions"] == 2
+    newsletter.sync(db, FakeBrevo())
+    # Brevo down from here on: a deletion and an unsubscribe wait for it
+    db.add(BrevoRemoval(email="carla@exemplo.com.br", created_at=NOW - timedelta(hours=10)))
+    privacy.unsubscribe(db, bia.id, ip=None, user_agent=None, now=NOW - timedelta(hours=30))
+    db.flush()
+    status = newsletter.sync_status(db, now=NOW)
+    assert status == {"pending_removals": 2, "pending_additions": 0, "oldest_pending_hours": 30, "stale": False}
+    assert newsletter.sync_status(db, now=NOW + timedelta(hours=20))["stale"]
+    assert ana.brevo_synced  # still subscribed: not part of the backlog
+
+
 def test_purge_keeps_a_lead_until_brevo_forgot_it(db):
     old = NOW - timedelta(days=400)
     lead = done(db, "ana@exemplo.com.br", at=old, newsletter=True).lead
@@ -192,6 +208,7 @@ def test_newsletter_stats_are_anonymous_and_need_the_token(client, pipeline_env,
     assert body["period"]["sites"] == 3 and not body["period"]["enough_data"] and body["subscribers"] == 1
     assert body["period"]["average_score"] == 71 and sum(body["period"]["bands_pct"].values()) == 100
     assert body["period"]["most_failed_check"] in body["period"]["checks_pct"]
+    assert body["brevo_sync"]["pending_additions"] == 1 and not body["brevo_sync"]["stale"]
     response = client.get("/api/newsletter/stats?days=30", headers={"Authorization": f"Bearer {STATS_TOKEN}"})
     assert response.status_code == 200 and response.json()["period_days"] == 30
     text = response.text

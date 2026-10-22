@@ -12,11 +12,12 @@ in raioxia.api.routes and go through privacy.unsubscribe like any other.
 
 import logging
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from urllib.parse import quote
 
 import httpx
 from rq import Queue, Retry
-from sqlalchemy import and_, not_, select
+from sqlalchemy import and_, func, not_, select
 from sqlalchemy.orm import Session
 
 from raioxia.db import BrevoRemoval, Lead
@@ -28,6 +29,8 @@ API = "https://api.brevo.com/v3"
 RETRY = Retry(max=3, interval=[60, 300, 1800])
 # Brevo webhook events that mean "stop sending to this person".
 STOP_EVENTS = {"unsubscribed", "unsubscribe", "hard_bounce", "hardbounce", "spam", "blocked", "contact_deleted"}
+# A removal still waiting after this means Brevo has been failing for longer than the daily purge + RQ retries cover.
+STALE_AFTER = timedelta(hours=48)
 
 
 class BrevoError(Exception):
@@ -111,6 +114,28 @@ def sync(session: Session, client: BrevoClient) -> dict[str, int]:
     if any(counts.values()):
         log.info("brevo sync", extra=counts)
     return counts
+
+
+def sync_status(session: Session, *, now: datetime) -> dict:
+    """Backlog Brevo should already have caught up on, for the weekly review (/api/newsletter/stats).
+
+    The daily purge and the RQ retries clear it within a day, so anything waiting longer than STALE_AFTER means
+    Brevo has been failing: people who unsubscribed or deleted their data would still get the next edition.
+    """
+    to_remove = and_(Lead.brevo_synced.is_(True), not_(WANTS_NEWSLETTER))
+    oldest_removal = session.scalar(select(func.min(BrevoRemoval.created_at)))
+    oldest_unsubscribe = session.scalar(select(func.min(Lead.unsubscribed_at)).where(to_remove))
+    waiting = [t for t in (oldest_removal, oldest_unsubscribe) if t is not None]
+    oldest = min(waiting) if waiting else None
+    return {
+        "pending_removals": (session.scalar(select(func.count()).select_from(BrevoRemoval)) or 0)
+        + (session.scalar(select(func.count()).select_from(Lead).where(to_remove)) or 0),
+        "pending_additions": session.scalar(
+            select(func.count()).select_from(Lead).where(WANTS_NEWSLETTER, Lead.brevo_synced.is_(False))
+        ) or 0,
+        "oldest_pending_hours": round((now - oldest).total_seconds() / 3600) if oldest else None,
+        "stale": oldest is not None and now - oldest > STALE_AFTER,
+    }
 
 
 def forget(session: Session, lead: Lead) -> None:

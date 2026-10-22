@@ -75,7 +75,7 @@ def findings(session: Session, *, now: datetime, days: int = 7) -> dict:
     domain or e-mail leaves this function.
     """
     from raioxia.db import CheckResultRow, Lead
-    from raioxia.newsletter import WANTS_NEWSLETTER
+    from raioxia.newsletter import WANTS_NEWSLETTER, sync_status
 
     def summarize(since: datetime | None) -> dict:
         query = select(Analysis).where(Analysis.status == "done", Analysis.reused_from_id.is_(None))
@@ -117,4 +117,5 @@ def findings(session: Session, *, now: datetime, days: int = 7) -> dict:
         "period": summarize(now - timedelta(days=days)),
         "all_time": summarize(None),
         "subscribers": session.scalar(select(func.count()).select_from(Lead).where(WANTS_NEWSLETTER)) or 0,
+        "brevo_sync": sync_status(session, now=now),
     }
