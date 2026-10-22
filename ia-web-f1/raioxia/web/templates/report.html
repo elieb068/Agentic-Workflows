@@ -87,7 +87,7 @@
       <span class="text-sm font-bold tracking-widest text-accent-light uppercase">{{ "Analisando" if r.status == "processing" else "Falta confirmar o e-mail" }}</span>
       <h1 class="font-display text-[30px] leading-tight font-extrabold break-all text-slate-100">{{ r.domain }}</h1>
       {% if r.status == "processing" %}
-      <p class="text-slate-400">Leva cerca de 2 minutos. Esta página se atualiza sozinha, e o resultado também vai para o seu e-mail: pode fechar se quiser.</p>
+      <p class="text-slate-400">Leva cerca de 3 minutos. Esta página se atualiza sozinha, e o resultado também vai para o seu e-mail: pode fechar se quiser.</p>
       {% else %}
       <p class="text-slate-400">Abra o link que enviamos para o seu e-mail. A análise começa assim que você clicar nele, e esta página se atualiza sozinha.</p>
       {% endif %}
