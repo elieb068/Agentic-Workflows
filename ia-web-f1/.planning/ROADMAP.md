@@ -12,4 +12,4 @@
 
 ## Done Criteria (Phase 1)
 
-A real user submits a URL, confirms the e-mail and receives the report in under 2 minutes, with SSRF protection and rate limiting active and tested.
+A real user submits a URL, confirms the e-mail and receives the report in under 3 minutes, with SSRF protection and rate limiting active and tested.

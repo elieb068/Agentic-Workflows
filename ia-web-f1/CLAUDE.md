@@ -96,7 +96,7 @@ Chamadas a LLMs, contas de usuário e login, pagamento, monitoramento recorrente
 3. **M3, front:** landing, página de confirmação, relatório web, privacidade/termos e placeholders de anúncio.
 4. **M4, deploy:** Docker Compose, Caddy e um guia `DEPLOY.md` para a VPS.
 
-Critério de pronto da Fase 1: um usuário real submete a URL, confirma o e-mail e recebe o relatório em menos de 2 minutos. Para isso, a proteção SSRF e o rate limit precisam estar ativos e testados.
+Critério de pronto da Fase 1: um usuário real submete a URL, confirma o e-mail e recebe o relatório em menos de 3 minutos. Para isso, a proteção SSRF e o rate limit precisam estar ativos e testados.
 
 ## Convenções
 
