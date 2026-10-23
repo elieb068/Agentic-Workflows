@@ -1,7 +1,7 @@
 """Public archive of the weekly newsletter (/newsletter).
 
 The n8n workflow publishes each approved edition with PUT /api/newsletter/issues/<edition> (Bearer
-NEWSLETTER_STATS_TOKEN). An edition shows up only from its publish_at on (the send time), so subscribers get it
+NEWSLETTER_ARCHIVE_TOKEN, separate from the stats read token). An edition shows up only from its publish_at on (the send time), so subscribers get it
 first. The text is the structured draft Claude wrote and the editor approved; edits made only in Brevo before
 approving are not reflected here.
 """

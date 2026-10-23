@@ -228,22 +228,22 @@ def newsletter_stats(
     request: Request, days: int = Query(7, ge=1, le=90), session: Session = Depends(db_session), app: AppDeps = Depends(deps),
 ):
     """Anonymous aggregate of recent analyses for the weekly edition. Bearer NEWSLETTER_STATS_TOKEN."""
-    if not _newsletter_authorized(request, app):
+    if not _bearer_matches(request, app.settings.newsletter_stats_token):
         return _error(401, "unauthorized", "Missing or invalid token.")
     return stats.findings(session, now=app.clock(), days=days)
 
 
-def _newsletter_authorized(request: Request, app: AppDeps) -> bool:
+def _bearer_matches(request: Request, secret: SecretStr | None) -> bool:
     scheme, _, token = request.headers.get("authorization", "").partition(" ")
-    return scheme.lower() == "bearer" and _secret_matches(token, app.settings.newsletter_stats_token)
+    return scheme.lower() == "bearer" and _secret_matches(token, secret)
 
 
 @router.put("/api/newsletter/issues/{edition}")
 def publish_issue(
     edition: int, request: Request, payload: dict = Body(...), session: Session = Depends(db_session), app: AppDeps = Depends(deps),
 ):
-    """Archive an approved edition (n8n). Visible at /newsletter/<edition> from publish_at on. Idempotent."""
-    if not _newsletter_authorized(request, app):  # before validating: no schema hints for strangers
+    """Archive an approved edition (n8n, Bearer NEWSLETTER_ARCHIVE_TOKEN). Visible at /newsletter/<edition> from publish_at on. Idempotent."""
+    if not _bearer_matches(request, app.settings.newsletter_archive_token):  # before validating: no schema hints for strangers
         return _error(401, "unauthorized", "Missing or invalid token.")
     if not 1 <= edition <= 100_000:
         return _error(422, "invalid_edition", "Edition must be a positive number.")
@@ -260,7 +260,7 @@ def publish_issue(
 @router.delete("/api/newsletter/issues/{edition}")
 def unpublish_issue(edition: int, request: Request, session: Session = Depends(db_session), app: AppDeps = Depends(deps)):
     """Remove an edition from the archive (e.g. its Brevo send was cancelled)."""
-    if not _newsletter_authorized(request, app):
+    if not _bearer_matches(request, app.settings.newsletter_archive_token):
         return _error(401, "unauthorized", "Missing or invalid token.")
     row = session.get(NewsletterIssue, edition)
     if row is not None:

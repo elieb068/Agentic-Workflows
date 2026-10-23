@@ -35,7 +35,12 @@ def test_publishing_needs_the_token_and_valid_links(client, pipeline_env, clock)
     body = issue(clock() - timedelta(hours=1))
     assert client.put("/api/newsletter/issues/1", json=body).status_code == 401
     assert client.put("/api/newsletter/issues/1", json={}).status_code == 401  # auth before validation
+    # the stats (read) token cannot write the archive
     pipeline_env.settings.newsletter_stats_token = SecretStr(TOKEN)
+    assert client.put("/api/newsletter/issues/1", json=body, headers=AUTH).status_code == 401
+    assert client.delete("/api/newsletter/issues/1", headers=AUTH).status_code == 401
+    pipeline_env.settings.newsletter_stats_token = None
+    pipeline_env.settings.newsletter_archive_token = SecretStr(TOKEN)
     assert client.put("/api/newsletter/issues/1", json=body, headers={"Authorization": "Bearer nope"}).status_code == 401
     bad = issue(clock(), tip=CONTENT["tip"] | {"guide_url": "javascript:alert(1)"})
     assert client.put("/api/newsletter/issues/1", json=bad, headers=AUTH).status_code == 422
@@ -46,7 +51,7 @@ def test_publishing_needs_the_token_and_valid_links(client, pipeline_env, clock)
 
 
 def test_editions_appear_only_after_their_send_time(client, pipeline_env, clock):
-    pipeline_env.settings.newsletter_stats_token = SecretStr(TOKEN)
+    pipeline_env.settings.newsletter_archive_token = SecretStr(TOKEN)
     client.put("/api/newsletter/issues/1", json=issue(clock() - timedelta(days=1)), headers=AUTH)
     client.put("/api/newsletter/issues/2", json=issue(clock() + timedelta(hours=20)) | {"subject": "Ainda não enviada"}, headers=AUTH)
 

@@ -216,7 +216,7 @@ def test_newsletter_stats_are_anonymous_and_need_the_token(client, pipeline_env,
 
 
 def test_empty_env_values_mean_unset(monkeypatch):
-    for name in ("BREVO_API_KEY", "BREVO_LIST_ID", "BREVO_WEBHOOK_SECRET", "NEWSLETTER_STATS_TOKEN", "INDEXNOW_KEY"):
+    for name in ("BREVO_API_KEY", "BREVO_LIST_ID", "BREVO_WEBHOOK_SECRET", "NEWSLETTER_STATS_TOKEN", "NEWSLETTER_ARCHIVE_TOKEN", "INDEXNOW_KEY"):
         monkeypatch.setenv(name, "")
     settings = Settings(secret_key="k" * 40)
     assert settings.brevo_list_id is None and settings.brevo_webhook_secret is None and settings.indexnow_key is None

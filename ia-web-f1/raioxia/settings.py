@@ -56,11 +56,13 @@ class Settings(BaseSettings):
     # Newsletter via Brevo (raioxia/newsletter): Raio-X keeps consent; Brevo only holds the subscribed contacts.
     # Without an API key nothing is sent to Brevo. The webhook secret is the last part of the URL Brevo calls
     # (/webhooks/brevo/<secret>) when someone unsubscribes there; the stats token guards /api/newsletter/stats
-    # (read by the n8n workflow that drafts each edition).
+    # (read by the n8n workflow that drafts each edition). The archive token is the only one that can write or
+    # delete archive editions (/api/newsletter/issues), so a leaked read token cannot publish on the site.
     brevo_api_key: SecretStr | None = None
     brevo_list_id: int | None = None
     brevo_webhook_secret: SecretStr | None = Field(default=None, min_length=24)
     newsletter_stats_token: SecretStr | None = Field(default=None, min_length=24)
+    newsletter_archive_token: SecretStr | None = Field(default=None, min_length=24)
 
     # IndexNow (Bing, Yandex, Seznam...): tells search engines which pages changed, right after a deploy.
     # The key is served at /indexnow.txt. Generate one with: python -c "import secrets; print(secrets.token_hex(16))"
